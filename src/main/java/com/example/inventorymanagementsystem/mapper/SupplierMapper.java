@@ -26,10 +26,10 @@ public class SupplierMapper {
         response.setName(supplier.getName());
         response.setContactName(supplier.getContactName());
         response.setEmail(supplier.getEmail());
-        supplier.setPhone(supplier.getPhone());
-        supplier.setAddress(supplier.getAddress());
-        supplier.setCreatedAt(supplier.getCreatedAt());
-        supplier.setUpdatedAt(supplier.getUpdatedAt());
+        response.setPhone(supplier.getPhone());
+        response.setAddress(supplier.getAddress());
+        response.setCreatedAt(supplier.getCreatedAt());
+        response.setUpdatedAt(supplier.getUpdatedAt());
         return response;
     }
 }
