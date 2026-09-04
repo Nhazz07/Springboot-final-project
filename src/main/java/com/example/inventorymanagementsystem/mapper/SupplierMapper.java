@@ -9,10 +9,27 @@ import org.springframework.stereotype.Component;
 public class SupplierMapper {
 
     public Supplier toEntity(SupplierRequest request) {
-        return null;
+        Supplier supplier = new Supplier();
+
+        supplier.setName(request.getName());
+        supplier.setContactName(request.getContactName());
+        supplier.setEmail(request.getEmail());
+        supplier.setPhone(request.getPhone());
+        supplier.setAddress(request.getAddress());
+        return supplier;
     }
 
     public SupplierResponse toResponse(Supplier supplier) {
-        return null;
+        SupplierResponse response = new SupplierResponse();
+
+        response.setId(supplier.getId());
+        response.setName(supplier.getName());
+        response.setContactName(supplier.getContactName());
+        response.setEmail(supplier.getEmail());
+        supplier.setPhone(supplier.getPhone());
+        supplier.setAddress(supplier.getAddress());
+        supplier.setCreatedAt(supplier.getCreatedAt());
+        supplier.setUpdatedAt(supplier.getUpdatedAt());
+        return response;
     }
 }

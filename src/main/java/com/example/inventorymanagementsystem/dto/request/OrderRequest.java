@@ -21,7 +21,4 @@ public class OrderRequest {
 
     private String notes;
 
-    @NotEmpty(message = "Order must contain at least one item")
-    @Valid
-    private List<OrderItemRequest> items;
 }
