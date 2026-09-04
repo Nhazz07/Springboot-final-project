@@ -8,11 +8,23 @@ import org.springframework.stereotype.Component;
 @Component
 public class CategoryMapper {
 
-    public Category toEntity(CategoryRequest request) {
-        return null;
+    public static Category toEntity(CategoryRequest request) {
+        Category category = new Category();
+
+        category.setName(request.getName());
+        category.setDescription(request.getDescription());
+        return category;
     }
 
     public CategoryResponse toResponse(Category category) {
-        return null;
+        CategoryResponse response = new CategoryResponse();
+
+        response.setId(category.getId());
+        response.setName(category.getName());
+        response.setDescription(category.getDescription());
+        response.setCreatedAt(category.getCreatedAt());
+        response.setUpdatedAt(category.getUpdatedAt());
+
+        return response;
     }
 }
