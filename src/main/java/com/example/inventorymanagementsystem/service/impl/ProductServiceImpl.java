@@ -1,5 +1,6 @@
 package com.example.inventorymanagementsystem.service.impl;
 
+import com.example.inventorymanagementsystem.config.client.CloudinaryService;
 import com.example.inventorymanagementsystem.dto.request.ProductRequest;
 import com.example.inventorymanagementsystem.dto.response.ProductResponse;
 import com.example.inventorymanagementsystem.entity.Category;
@@ -15,8 +16,10 @@ import com.example.inventorymanagementsystem.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -26,10 +29,11 @@ public class ProductServiceImpl implements ProductService {
     private final CategoryRepository categoryRepository;
     private final SupplierRepository supplierRepository;
     private final ProductMapper productMapper;
+    private final CloudinaryService cloudinaryService;
 
     @Override
     @Transactional
-    public ProductResponse createProduct(ProductRequest request) {
+    public ProductResponse createProduct(ProductRequest request, MultipartFile file) {
         String name = request.getName().trim();
         if (productRepository.existsByName(name)) {
             throw new BadRequestException("Product with name '" + name + "' already exists");
@@ -43,6 +47,12 @@ public class ProductServiceImpl implements ProductService {
 
         Product product = productMapper.toEntity(request, category, supplier);
         product.setName(name);
+
+        if (file != null && !file.isEmpty()) {
+            Map<?, ?> uploadResult = cloudinaryService.uploadImage(file);
+            String secureUrl = (String) uploadResult.get("secure_url");
+            product.setImageUrl(secureUrl);
+        }
 
         Product saved = productRepository.save(product);
         return productMapper.toResponse(saved);
@@ -96,7 +106,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
-    public ProductResponse updateProduct(Long id, ProductRequest request) {
+    public ProductResponse updateProduct(Long id, ProductRequest request, MultipartFile file) {
         Product product = productRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", "id", id));
 
@@ -123,7 +133,14 @@ public class ProductServiceImpl implements ProductService {
         product.setPrice(request.getPrice());
         product.setQuantity(request.getQuantity());
         product.setMinStockLevel(request.getMinStockLevel());
-        product.setImageUrl(request.getImageUrl());
+
+        if (file != null && !file.isEmpty()) {
+            Map<?, ?> uploadResult = cloudinaryService.uploadImage(file);
+            String secureUrl = (String) uploadResult.get("secure_url");
+            product.setImageUrl(secureUrl);
+        } else if (request.getImageUrl() != null && !request.getImageUrl().isBlank()) {
+            product.setImageUrl(request.getImageUrl());
+        }
 
         Product updated = productRepository.save(product);
         return productMapper.toResponse(updated);
