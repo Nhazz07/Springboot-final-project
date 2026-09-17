@@ -16,8 +16,15 @@ public class OrderItemMapper {
         OrderItem orderItem = new OrderItem();
 
         orderItem.setProduct(product);
-        orderItem.setQuantity(orderItem.getQuantity());
-        orderItem.setUnitPrice(orderItem.getUnitPrice());
+        // Quantity comes from the customer's request
+        orderItem.setQuantity(request.getQuantity());
+        // Price comes from the database, not the frontend
+        orderItem.setUnitPrice(product.getPrice());
+        // calculate subtotal
+        BigDecimal subtotal = product.getPrice()
+                .multiply(BigDecimal.valueOf(request.getQuantity()));
+
+        orderItem.setSubtotal(subtotal);
         return orderItem;
     }
 
