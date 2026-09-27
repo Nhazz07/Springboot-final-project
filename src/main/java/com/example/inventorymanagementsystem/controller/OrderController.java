@@ -5,19 +5,20 @@ import com.example.inventorymanagementsystem.dto.response.ApiResponse;
 import com.example.inventorymanagementsystem.dto.response.OrderResponse;
 import com.example.inventorymanagementsystem.entity.enums.OrderStatus;
 import com.example.inventorymanagementsystem.service.OrderService;
-import com.example.inventorymanagementsystem.service.impl.OrderServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/orders")
+@Validated
 @RequiredArgsConstructor
 public class OrderController {
     private final OrderService orderService;
