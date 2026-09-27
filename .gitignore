@@ -36,6 +36,12 @@ build/
 src/main/resources/application.properties
 !src/main/resources/application.properties.example
 
+### Frontend Artifacts ###
+node_modules/
+dist/
+dist-ssr/
+*.local
+
 ### Local Notes & Plans (Not Pushed) ###
 docs/
 notes/

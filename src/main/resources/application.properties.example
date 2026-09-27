@@ -21,3 +21,7 @@ spring.servlet.multipart.max-file-size=20MB
 cloudinary.cloud-name=your_cloud_name
 cloudinary.api-key=your_api_key
 cloudinary.api-secret=your_api_secret
+
+# JWT Settings
+app.jwt.secret=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+app.jwt.expiration-ms=86400000
