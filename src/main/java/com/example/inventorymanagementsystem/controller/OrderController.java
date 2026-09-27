@@ -54,9 +54,9 @@ public class OrderController {
         return ResponseEntity.ok(ApiResponse.success(orderResponseList, "All order retrieved successfully"));
     }
 
-    @GetMapping("/user/userId")
+    @GetMapping("/user/{userId}")
     @Operation(summary = "Get order by user id")
-    public ResponseEntity<ApiResponse<List<OrderResponse>>> getOrderUserId( @PathVariable @Positive Long userId){
+    public ResponseEntity<ApiResponse<List<OrderResponse>>> getOrderUserId(@PathVariable @Positive Long userId){
         List<OrderResponse> orderResponseList = orderService.getOrdersByUserId(userId);
 
         return ResponseEntity.ok(ApiResponse.success(orderResponseList, "Order retrieved successfully"));
