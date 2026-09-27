@@ -31,3 +31,12 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Application Environment / Secrets ###
+src/main/resources/application.properties
+!src/main/resources/application.properties.example
+
+### Local Notes & Plans (Not Pushed) ###
+docs/
+notes/
+
