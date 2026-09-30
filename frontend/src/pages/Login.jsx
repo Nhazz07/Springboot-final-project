@@ -42,7 +42,7 @@ const Login = () => {
 
         if (!userIsAdmin) {
           // Standard user accounts are strictly routed to the customer landing page
-          navigate('/', { replace: true });
+          navigate('/landing', { replace: true });
         } else {
           // Administrators are routed to their requested admin path or dashboard
           const adminTarget = location.state?.from?.pathname || '/dashboard';

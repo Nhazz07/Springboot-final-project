@@ -27,7 +27,7 @@ const Sidebar = () => {
 
   const navItems = [
     ...(isAdmin
-      ? [{ name: 'Dashboard', path: '/', icon: LayoutDashboard }]
+      ? [{ name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard }]
       : [{ name: 'Storefront', path: '/', icon: ShoppingBag }]),
     { name: isAdmin ? 'Products' : 'Shopping Catalog', path: '/products', icon: Package },
     ...(isAdmin
