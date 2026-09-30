@@ -25,6 +25,8 @@ public class SupplierResponse {
 
     private String address;
 
+    private String imageUrl;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;

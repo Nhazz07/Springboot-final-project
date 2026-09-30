@@ -35,12 +35,19 @@ public class ProductController {
     private final ProductService productService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    // @Operation: use for Swagger UI displays a clear label next to the endpoint:
-    @Operation(summary = "Create product with optional image upload", description = "Uploads image to Cloudinary (if provided), saves secure URL in DB, and creates product")
+    @Operation(summary = "Create product with optional image upload(s)", description = "Uploads image(s) to Cloudinary, saves secure URLs in DB, and creates product")
     public ResponseEntity<ApiResponse<ProductResponse>> createProduct(
             @ModelAttribute @Valid ProductRequest request,
-            @RequestParam(value = "file", required = false) MultipartFile file) {
-        ProductResponse response = productService.createProduct(request, file);
+            @RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam(value = "files", required = false) List<MultipartFile> files) {
+        java.util.List<MultipartFile> allFiles = new java.util.ArrayList<>();
+        if (files != null) {
+            allFiles.addAll(files);
+        }
+        if (file != null && !file.isEmpty()) {
+            allFiles.add(file);
+        }
+        ProductResponse response = productService.createProduct(request, allFiles);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(response, "Product created successfully"));
     }
@@ -81,13 +88,56 @@ public class ProductController {
     }
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Operation(summary = "Update product by ID with optional image upload", description = "Uploads new image to Cloudinary (if provided) and updates DB")
+    @Operation(summary = "Update product by ID with optional image upload(s)", description = "Uploads new image(s) to Cloudinary and updates DB")
     public ResponseEntity<ApiResponse<ProductResponse>> updateProduct(
             @PathVariable Long id,
             @ModelAttribute @Valid ProductRequest request,
-            @RequestParam(value = "file", required = false) MultipartFile file) {
-        ProductResponse response = productService.updateProduct(id, request, file);
+            @RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam(value = "files", required = false) List<MultipartFile> files) {
+        java.util.List<MultipartFile> allFiles = new java.util.ArrayList<>();
+        if (files != null) {
+            allFiles.addAll(files);
+        }
+        if (file != null && !file.isEmpty()) {
+            allFiles.add(file);
+        }
+        ProductResponse response = productService.updateProduct(id, request, allFiles);
         return ResponseEntity.ok(ApiResponse.success(response, "Product updated successfully"));
+    }
+
+    @PostMapping(value = "/{id}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Upload additional images to an existing product")
+    public ResponseEntity<ApiResponse<ProductResponse>> addProductImages(
+            @PathVariable Long id,
+            @RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam(value = "files", required = false) List<MultipartFile> files) {
+        java.util.List<MultipartFile> allFiles = new java.util.ArrayList<>();
+        if (files != null) {
+            allFiles.addAll(files);
+        }
+        if (file != null && !file.isEmpty()) {
+            allFiles.add(file);
+        }
+        ProductResponse response = productService.addProductImages(id, allFiles);
+        return ResponseEntity.ok(ApiResponse.success(response, "Images uploaded successfully"));
+    }
+
+    @DeleteMapping("/{id}/images")
+    @Operation(summary = "Delete an image from a product and Cloudinary")
+    public ResponseEntity<ApiResponse<ProductResponse>> deleteProductImage(
+            @PathVariable Long id,
+            @RequestParam("imageUrl") String imageUrl) {
+        ProductResponse response = productService.deleteProductImage(id, imageUrl);
+        return ResponseEntity.ok(ApiResponse.success(response, "Image deleted successfully"));
+    }
+
+    @PutMapping("/{id}/images/primary")
+    @Operation(summary = "Set cover/primary image for a product")
+    public ResponseEntity<ApiResponse<ProductResponse>> setPrimaryProductImage(
+            @PathVariable Long id,
+            @RequestParam("imageUrl") String imageUrl) {
+        ProductResponse response = productService.setPrimaryProductImage(id, imageUrl);
+        return ResponseEntity.ok(ApiResponse.success(response, "Primary image updated successfully"));
     }
 
     @DeleteMapping("/{id}")

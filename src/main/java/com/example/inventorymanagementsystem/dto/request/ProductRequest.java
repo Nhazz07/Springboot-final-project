@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @Builder
@@ -38,6 +39,8 @@ public class ProductRequest {
     private Integer minStockLevel;
 
     private String imageUrl;
+
+    private List<String> images;
 
     @NotNull(message = "Category ID is required")
     private Long categoryId;

@@ -22,6 +22,8 @@ public class UserResponse {
 
     private Role role;
 
+    private String imageUrl;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;

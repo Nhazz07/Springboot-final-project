@@ -21,6 +21,10 @@ spring.servlet.multipart.max-file-size=20MB
 cloudinary.cloud-name=your_cloud_name
 cloudinary.api-key=your_api_key
 cloudinary.api-secret=your_api_secret
+cloudinary.folder=etec_springboot_final_project
+cloudinary.folder-product=etec_springboot_final_project/etec_springboot_final_project_product
+cloudinary.folder-profile=etec_springboot_final_project/etec_springboot_final_project_profile
+cloudinary.folder-supplier=etec_springboot_final_project/etec_springboot_final_project_supplier
 
 # JWT Settings
 app.jwt.secret=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970

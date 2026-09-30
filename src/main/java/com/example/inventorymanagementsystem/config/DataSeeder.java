@@ -34,16 +34,28 @@ public class DataSeeder implements CommandLineRunner {
         );
 
         for (SeedAccount acc : accounts) {
-            if (!userRepository.existsByUsername(acc.username()) && !userRepository.existsByEmail(acc.email())) {
-                User user = User.builder()
-                        .username(acc.username())
-                        .email(acc.email())
-                        .password(passwordEncoder.encode(acc.password()))
-                        .role(acc.role())
-                        .build();
-                userRepository.save(user);
-                log.info("Seeded admin account: {} ({}) with password '{}'", acc.username(), acc.email(), acc.password());
-            }
+            userRepository.findByUsername(acc.username())
+                    .or(() -> userRepository.findByEmail(acc.email()))
+                    .ifPresentOrElse(
+                            existingUser -> {
+                                existingUser.setUsername(acc.username());
+                                existingUser.setEmail(acc.email());
+                                existingUser.setPassword(passwordEncoder.encode(acc.password()));
+                                existingUser.setRole(acc.role());
+                                userRepository.save(existingUser);
+                                log.info("Synchronized seed account password: {}", acc.username());
+                            },
+                            () -> {
+                                User user = User.builder()
+                                        .username(acc.username())
+                                        .email(acc.email())
+                                        .password(passwordEncoder.encode(acc.password()))
+                                        .role(acc.role())
+                                        .build();
+                                userRepository.save(user);
+                                log.info("Seeded admin account: {} ({}) with password '{}'", acc.username(), acc.email(), acc.password());
+                            }
+                    );
         }
     }
 

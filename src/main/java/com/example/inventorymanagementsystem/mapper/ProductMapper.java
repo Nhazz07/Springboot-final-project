@@ -52,6 +52,19 @@ public class ProductMapper {
         response.setCreatedAt(product.getCreatedAt());
         response.setUpdatedAt(product.getUpdatedAt());
 
+        java.util.List<String> allImages = new java.util.ArrayList<>();
+        if (product.getImageUrl() != null && !product.getImageUrl().isBlank()) {
+            allImages.add(product.getImageUrl());
+        }
+        if (product.getImages() != null) {
+            for (String img : product.getImages()) {
+                if (img != null && !img.isBlank() && !allImages.contains(img)) {
+                    allImages.add(img);
+                }
+            }
+        }
+        response.setImages(allImages);
+
         return response;
     }
 }
