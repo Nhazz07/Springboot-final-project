@@ -34,7 +34,7 @@ build/
 
 ### Application Environment / Secrets ###
 src/main/resources/application.properties
-!src/main/resources/application.properties.example
+!src/main/resources/application.properties
 
 ### Frontend Artifacts ###
 node_modules/
@@ -45,4 +45,5 @@ dist-ssr/
 ### Local Notes & Plans (Not Pushed) ###
 docs/
 notes/
-
+.env
+src/main/resources/application.properties

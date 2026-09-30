@@ -23,6 +23,7 @@ public class AdminSeeder implements CommandLineRunner {
             User admin = new User();
 
             admin.setUsername("admin");
+            admin.setEmail("admin@gmail.com");
             admin.setPassword(passwordEncoder.encode("admin123"));
             admin.setRole(Role.ADMIN);
 
