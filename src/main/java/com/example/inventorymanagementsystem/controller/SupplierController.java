@@ -9,8 +9,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -22,10 +24,20 @@ public class SupplierController {
 
     private final SupplierService supplierService;
 
-    @PostMapping
-    @Operation(summary = "Create a new supplier")
-    public ResponseEntity<ApiResponse<SupplierResponse>> createSupplier(@Valid @RequestBody SupplierRequest request) {
-        SupplierResponse response = supplierService.createSupplier(request);
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Create a new supplier with optional image upload")
+    public ResponseEntity<ApiResponse<SupplierResponse>> createSupplierMultipart(
+            @ModelAttribute @Valid SupplierRequest request,
+            @RequestParam(value = "file", required = false) MultipartFile file) {
+        SupplierResponse response = supplierService.createSupplier(request, file);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.created(response, "Supplier created successfully"));
+    }
+
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Create a new supplier (JSON)")
+    public ResponseEntity<ApiResponse<SupplierResponse>> createSupplierJson(@Valid @RequestBody SupplierRequest request) {
+        SupplierResponse response = supplierService.createSupplier(request, null);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.created(response, "Supplier created successfully"));
     }
@@ -44,12 +56,22 @@ public class SupplierController {
         return ResponseEntity.ok(ApiResponse.success(response, "Supplier retrieved successfully"));
     }
 
-    @PutMapping("/{id}")
-    @Operation(summary = "Update supplier by ID")
-    public ResponseEntity<ApiResponse<SupplierResponse>> updateSupplier(
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Update supplier by ID with optional image upload")
+    public ResponseEntity<ApiResponse<SupplierResponse>> updateSupplierMultipart(
+            @PathVariable Long id,
+            @ModelAttribute @Valid SupplierRequest request,
+            @RequestParam(value = "file", required = false) MultipartFile file) {
+        SupplierResponse response = supplierService.updateSupplier(id, request, file);
+        return ResponseEntity.ok(ApiResponse.success(response, "Supplier updated successfully"));
+    }
+
+    @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Update supplier by ID (JSON)")
+    public ResponseEntity<ApiResponse<SupplierResponse>> updateSupplierJson(
             @PathVariable Long id,
             @Valid @RequestBody SupplierRequest request) {
-        SupplierResponse response = supplierService.updateSupplier(id, request);
+        SupplierResponse response = supplierService.updateSupplier(id, request, null);
         return ResponseEntity.ok(ApiResponse.success(response, "Supplier updated successfully"));
     }
 

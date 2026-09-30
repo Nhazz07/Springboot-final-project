@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Builder
@@ -29,6 +31,8 @@ public class ProductResponse {
     private Integer minStockLevel;
 
     private String imageUrl;
+    @Builder.Default
+    private List<String> images = new ArrayList<>();
 
     private Long categoryId;
 

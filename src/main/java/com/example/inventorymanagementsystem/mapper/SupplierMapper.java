@@ -16,6 +16,7 @@ public class SupplierMapper {
         supplier.setEmail(request.getEmail());
         supplier.setPhone(request.getPhone());
         supplier.setAddress(request.getAddress());
+        supplier.setImageUrl(request.getImageUrl());
         return supplier;
     }
 
@@ -28,6 +29,7 @@ public class SupplierMapper {
         response.setEmail(supplier.getEmail());
         response.setPhone(supplier.getPhone());
         response.setAddress(supplier.getAddress());
+        response.setImageUrl(supplier.getImageUrl());
         response.setCreatedAt(supplier.getCreatedAt());
         response.setUpdatedAt(supplier.getUpdatedAt());
         return response;

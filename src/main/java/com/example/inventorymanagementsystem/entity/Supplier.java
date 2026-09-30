@@ -37,6 +37,9 @@ public class Supplier {
     @Column(columnDefinition = "TEXT")
     private String address;
 
+    @Column(name = "image_url")
+    private String imageUrl;
+
     @OneToMany(mappedBy = "supplier", fetch = FetchType.LAZY)
     @Builder.Default
     private List<Product> products = new ArrayList<>();

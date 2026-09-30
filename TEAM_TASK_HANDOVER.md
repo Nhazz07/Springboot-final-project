@@ -78,37 +78,51 @@ graph TD
 
 ### 👤 Module A — Mongkol's Scope (`Catalog & Core System`)
 
-- [ ] **A1 • Auth & Gatekeeper UI**
+- [x] **A1 • Auth & Gatekeeper UI**
   - Frosted glass login card with ambient background glow.
   - Automatic JWT storage in `localStorage` + Axios request interceptor (`Bearer <token>`).
   - Quick-switch demo account buttons (`mongkol`, `nhazz`, `admin`).
-- [ ] **A2 • Executive Dashboard (BI & Analytics)**
+- [x] **A2 • Executive Dashboard (BI & Analytics)**
   - Dynamic KPI cards: Total Inventory Value, Low-Stock Alerts, Active SKUs, Total Sales.
   - Interactive inventory status indicators (In Stock, Low Warning, Critical Empty).
-- [ ] **A3 • Product Catalog & Cloudinary Media Hub**
-  - Responsive grid & list view with real-time search and multi-category filters.
-  - Product creation & edit modal with instant image preview & Cloudinary upload integration.
-- [ ] **A4 • Categories & Suppliers Management**
-  - Sleek modal-based CRUD operations.
-  - Item counters and supplier contact cards.
+- [x] **A3 • Product Catalog & Cloudinary Media Hub**
+  - Responsive grid & list view with real-time search, multi-category filters, and live photo counter badges (`📷 N photos`).
+  - **Multiple Product Photos Engine**:
+    - Upload multiple photos concurrently upon product creation and modification.
+    - Interactive in-modal photo gallery with "Cover" badge indicator.
+    - Set any uploaded photo as the **Cover/Primary** photo in real-time (`PUT /api/v1/products/{id}/images/primary`).
+    - Delete any individual photo instantly from Cloudinary and database with 1-click (`DELETE /api/v1/products/{id}/images`).
+    - Dedicated dynamic folder targeting: all product photos go into `etec_springboot_final_project/etec_springboot_final_project_product`.
+    - Automatic Cloudinary deletion & cache invalidation when individual photos or entire products are deleted or updated.
+    - **POS Compatibility Guaranteed**: The primary photo is synchronized to `imageUrl` so Nhazz's POS and Order modules work seamlessly without any modifications.
+- [x] **A4 • Categories, Suppliers & Profile Management**
+  - Sleek modal-based CRUD operations for categories and suppliers.
+  - Supplier logos stored in `etec_springboot_final_project/etec_springboot_final_project_supplier`.
+  - User avatars stored in `etec_springboot_final_project/etec_springboot_final_project_profile`.
+  - Automatic old image cleanup on Cloudinary upon logo/avatar replacement or deletion.
+  - User signup & profile image management.
+- [x] **A5 • Staff & Access Control Dashboard (`Users.jsx`)** *(Taken over by Mongkol)*
+  - Full staff directory with dynamic KPI metric cards (Total Accounts, Admins, Standard Users, Cloudinary Avatars).
+  - Role management (`ROLE_ADMIN` vs `ROLE_USER`) with 1-click privilege switcher.
+  - Create staff modal with validation and customizable role assignment.
+  - Edit staff modal with optional password updating (keeps password unchanged if blank).
+  - Cloudinary profile picture uploads directly by user ID (`POST /api/v1/users/{id}/avatar`).
+  - Self-deletion guard protecting active admin session.
+  - Protected behind `adminOnly` route in `App.jsx` and added to `Sidebar.jsx`.
 
 ---
 
-### 👤 Module B — Nhazz's Scope (`POS, Orders & User Administration`)
+### 👤 Module B — Nhazz's Scope (`POS, Storefront & Orders`)
 
-- [ ] **B1 • Point of Sale (POS) & Create Order Station**
-  - Visual product selection grid with instant barcode/SKU search.
-  - Dynamic cart drawer with quantity guards (prevents adding more than available stock).
-  - Customer info fields + live tax/total calculator.
-  - One-click checkout & instant printable glass invoice / receipt.
+- [ ] **B1 • Point of Sale (POS), Storefront & Shopping Cart**
+  - Visual product selection grid connected to live `productService.getAll()`.
+  - Upgrade `ProductCard.jsx` to Apple `#1D1D1F` styling with `object-contain` images.
+  - Dynamic cart drawer (`CartDrawer.jsx`) with quantity guards (prevents adding more than available stock).
+  - Checkout modal (`CheckoutModal.jsx`) calling `orderService.create()`.
 - [ ] **B2 • Order Management & Automated Restocking**
-  - Interactive Order History table with filterable badges (`PENDING`, `COMPLETED`, `CANCELLED`).
-  - Itemized Order Detail modal with line-by-line breakdown.
+  - Fix `@Transactional(readOnly = true)` bug in `OrderServiceImpl.java`.
+  - Interactive Order History table (`Orders.jsx`) with filterable badges (`PENDING`, `COMPLETED`, `CANCELLED`).
   - **Cancel Order Action**: Restores deducted inventory quantities instantly via backend transaction.
-- [ ] **B3 • User & Access Control Center**
-  - Staff management table displaying all system users.
-  - Enable/Disable account status switch.
-  - Add new staff account with role assignment.
 
 ---
 
@@ -158,11 +172,14 @@ npm run dev
 - `POST /api/auth/register` $\rightarrow$ `{ "username": "...", "email": "...", "password": "..." }` $\Rightarrow$ Default role is `ADMIN`
 
 ### 📦 Products & Catalog (`/api/v1/products`)
-- `GET /api/v1/products` $\rightarrow$ List all products (with category & supplier relations)
-- `GET /api/v1/products/{id}` $\rightarrow$ Single product detail
-- `POST /api/v1/products` $\rightarrow$ Multipart/form-data with image upload (`name`, `price`, `quantity`, `categoryId`, `supplierId`, `imageFile`)
-- `PUT /api/v1/products/{id}` $\rightarrow$ Update product details
-- `DELETE /api/v1/products/{id}` $\rightarrow$ Remove product
+- `GET /api/v1/products` $\rightarrow$ List all products (returns `imageUrl` for POS cover + `images: [...]` list)
+- `GET /api/v1/products/{id}` $\rightarrow$ Single product detail with full `images` array
+- `POST /api/v1/products` $\rightarrow$ Multipart/form-data with multi-image support (`files` list or single `file`, `name`, `price`, `quantity`, `categoryId`, `supplierId`)
+- `PUT /api/v1/products/{id}` $\rightarrow$ Update product details with optional additional photos (`files`)
+- `POST /api/v1/products/{id}/images` $\rightarrow$ Multipart/form-data to upload additional photos directly
+- `DELETE /api/v1/products/{id}/images?imageUrl={url}` $\rightarrow$ Delete a single photo from Cloudinary & entity
+- `PUT /api/v1/products/{id}/images/primary?imageUrl={url}` $\rightarrow$ Set a specific photo as the primary cover
+- `DELETE /api/v1/products/{id}` $\rightarrow$ Remove product and purge all its photos from Cloudinary
 
 ### 🏷️ Categories & Suppliers (`/api/v1/categories`, `/api/v1/suppliers`)
 - `GET / POST / PUT / DELETE /api/v1/categories`
@@ -191,34 +208,40 @@ npm run dev
 
 ---
 
-## 🎨 6. iOS 27 Aesthetic Tokens & Design Guidelines
+## 🎨 6. Apple Clean Aesthetic Tokens & Design Guidelines
 
 ```css
-/*  iOS 27 Glassmorphism Design Tokens */
+/*  Apple Website Clean Design Tokens */
 :root {
-  --ios-bg-canvas: #090A0F;
-  --ios-surface-glass: rgba(255, 255, 255, 0.05);
-  --ios-surface-glass-hover: rgba(255, 255, 255, 0.08);
-  --ios-border-glass: rgba(255, 255, 255, 0.12);
-  --ios-blur-intensity: blur(24px) saturate(180%);
-  
-  /* Luminous Accent Hierarchy */
-  --ios-accent-blue: #0A84FF;
-  --ios-accent-green: #30D158;
-  --ios-accent-pink: #FF375F;
-  --ios-accent-purple: #BF5AF2;
-  --ios-accent-orange: #FF9F0A;
-  
-  /* Typography & Shadows */
-  --ios-font-primary: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif;
-  --ios-shadow-glass: 0 16px 36px rgba(0, 0, 0, 0.45);
+  --apple-bg: #f5f5f7;                        /* Athens Gray canvas */
+  --apple-surface: #ffffff;                   /* Pure white card surface */
+  --apple-border: rgba(0, 0, 0, 0.08);        /* Subtle Apple border */
+  --apple-border-hover: rgba(0, 0, 0, 0.16);  /* Dynamic hover border */
+
+  /* Apple Primary Interactive Accent (#1D1D1F signature dark slate) */
+  --apple-primary: #1d1d1f;                   /* Primary CTA buttons & active tabs */
+  --apple-primary-hover: #333336;             /* Smooth hover transition */
+  --apple-primary-active: #000000;            /* Click depression state */
+
+  /* Apple System Status Accents */
+  --apple-green: #30d158;                     /* In Stock / Success */
+  --apple-orange: #ff9f0a;                    /* Low Stock / Warning */
+  --apple-red: #ff3b30;                       /* Out of Stock / Danger */
+
+  /* Typography & Enhanced Depth Shadows */
+  --apple-font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", sans-serif;
+  --apple-shadow-resting: 0 4px 16px -2px rgba(0, 0, 0, 0.07), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+  --apple-shadow-hover: 0 16px 32px -4px rgba(0, 0, 0, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.06);
+  --apple-shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.18);
+  --apple-shadow-btn: 0 4px 14px 0 rgba(0, 0, 0, 0.18);
 }
 ```
 
 ### 💫 UI Principles:
-1. **Dynamic Micro-Interactions**: Hover scales (`transform: translateY(-2px) scale(1.01)`), smooth 200ms ease transitions.
-2. **Visual Hierarchy**: Translucent background cards with subtle high-contrast border outlines (`rgba(255, 255, 255, 0.12)`).
-3. **Status Badges**: Pill-shaped glowing badges for stock states (`In Stock: #30D158`, `Low Stock: #FF9F0A`, `Out of Stock: #FF375F`).
+1. **Dynamic Micro-Interactions**: Hover elevation (`transform: translateY(-2px)`), smooth 200ms ease transitions (`cubic-bezier(0.16, 1, 0.3, 1)`).
+2. **Visual Hierarchy & Depth**: Frosted glass panels (`background: rgba(255, 255, 255, 0.92)` with `backdrop-filter: blur(20px)`) over an Athens Gray `#f5f5f7` canvas with enhanced shadow depth.
+3. **Pill-Shaped CTAs**: Action buttons and active route pills styled in solid `#1D1D1F` with high-contrast pure white text/icons.
+4. **Status Badges**: Pill-shaped translucent badges for stock states (`In Stock: #30D158`, `Low Stock: #FF9F0A`, `Out of Stock: #FF375F`).
 
 ---
 

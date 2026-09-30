@@ -46,7 +46,7 @@ public class AuthServiceImpl implements AuthService {
                 .username(request.getUsername().trim())
                 .email(request.getEmail().trim().toLowerCase())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.ADMIN)
+                .role(Role.USER)
                 .build();
 
         User savedUser = userRepository.save(user);
@@ -62,6 +62,7 @@ public class AuthServiceImpl implements AuthService {
                 .username(savedUser.getUsername())
                 .email(savedUser.getEmail())
                 .role(savedUser.getRole())
+                .imageUrl(savedUser.getImageUrl())
                 .build();
     }
 
@@ -94,6 +95,7 @@ public class AuthServiceImpl implements AuthService {
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .role(user.getRole())
+                .imageUrl(user.getImageUrl())
                 .build();
     }
 }

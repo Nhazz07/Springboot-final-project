@@ -46,3 +46,4 @@ dist-ssr/
 docs/
 notes/
 .env
+src/main/resources/application.properties
