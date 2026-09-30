@@ -34,7 +34,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderItemMapper orderItemMapper;
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public OrderResponse createOrder(OrderRequest request) {
         User user = userRepository.findById(request.getUserId()).orElseThrow(() ->
                 new RuntimeException("User Not Found"));

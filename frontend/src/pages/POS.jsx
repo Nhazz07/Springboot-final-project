@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { ShoppingCart } from "lucide-react";
 
-import { getProducts } from "../api/productApi.js";
+import { getProducts } from "../services/productApi.js";
 
 import ProductCard from "../components/ProductCard";
 import CartDrawer from "../components/CartDrawer";
