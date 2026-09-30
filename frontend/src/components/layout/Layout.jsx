@@ -1,13 +1,16 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
 
 const Layout = () => {
+  const { isAdmin } = useAuth();
+
   return (
     <div className="flex min-h-screen bg-[#f5f5f7] text-[#1d1d1f] antialiased selection:bg-[#1d1d1f] selection:text-white">
       {/* Fixed Sticky Sidebar */}
-      <Sidebar />
+      {isAdmin && <Sidebar />}
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">

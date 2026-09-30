@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -43,6 +44,7 @@ public class UserController {
     }
 
     @GetMapping("/profile/{username}")
+    @PreAuthorize("hasRole('ADMIN') or authentication.name == #username")
     @Operation(summary = "Get user profile details by username")
     public ResponseEntity<ApiResponse<UserResponse>> getProfile(@PathVariable String username) {
         UserResponse userResponse = userService.getProfileByUsername(username);
@@ -75,6 +77,7 @@ public class UserController {
     }
 
     @PostMapping(value = "/profile/{username}/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN') or authentication.name == #username")
     @Operation(summary = "Upload user profile avatar image to Cloudinary by username")
     public ResponseEntity<ApiResponse<UserResponse>> uploadAvatarByUsername(
             @PathVariable String username,

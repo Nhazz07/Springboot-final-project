@@ -21,6 +21,11 @@ const HomeRoute = () => {
   return isAdmin ? <Dashboard /> : <UserLanding />;
 };
 
+const DefaultRoute = () => {
+  const { isAdmin } = useAuth();
+  return isAdmin ? <Navigate to="/dashboard" replace /> : <UserLanding />;
+};
+
 function App() {
   return (
     <BrowserRouter>
@@ -28,6 +33,11 @@ function App() {
         <Routes>
           {/* Public Route */}
           <Route path="/login" element={<Login />} />
+
+          {/* Public landing page inside the user-style layout */}
+          <Route element={<Layout />}>
+            <Route path="/" element={<DefaultRoute />} />
+          </Route>
 
           {/* Protected Routes inside App Layout */}
           <Route
@@ -37,9 +47,15 @@ function App() {
               </ProtectedRoute>
             }
           >
-            <Route path="/" element={<HomeRoute />} />
             <Route path="/home" element={<HomeRoute />} />
-            <Route path="/landing" element={<UserLanding />} />
+            <Route
+              path="/landing"
+              element={
+                <ProtectedRoute userOnly>
+                  <UserLanding />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/dashboard"
               element={
