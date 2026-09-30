@@ -2,7 +2,7 @@
 
 #  IMS • OS 27
 ### NEXT-GEN INVENTORY & POS SYSTEM
-**Spring Boot 3.x Security Architecture • JJWT 0.12.6 • PostgreSQL 18 • Cloudinary • React 19**
+**Spring Boot 4.1.1 Security Architecture • JJWT 0.12.6 • PostgreSQL 18 • Cloudinary • React 19**
 
 ---
 
@@ -57,7 +57,7 @@ graph TD
 ## 🔑 2. Pre-Seeded Team Accounts (DataSeeder)
 
 > [!NOTE]
-> All accounts are initialized with password `123456` upon application startup. Default registration automatically assigns `ADMIN` privileges.
+> Seeded team accounts are initialized with password `123456` upon application startup. Public registration always assigns `ROLE_USER`; administrator roles are reserved for seeded or admin-managed accounts.
 
 | Avatar | Identity | Username | Registered Email | Assigned Role | Default PIN / Password |
 | :---: | :--- | :--- | :--- | :---: | :---: |
@@ -169,7 +169,7 @@ npm run dev
 
 ### 🔐 Authentication (`/api/auth`)
 - `POST /api/auth/login` $\rightarrow$ `{ "username": "...", "password": "..." }` $\Rightarrow$ Returns `{ token, user }`
-- `POST /api/auth/register` $\rightarrow$ `{ "username": "...", "email": "...", "password": "..." }` $\Rightarrow$ Default role is `ADMIN`
+- `POST /api/auth/register` $\rightarrow$ `{ "username": "...", "email": "...", "password": "..." }` $\Rightarrow$ Default role is `ROLE_USER`
 
 ### 📦 Products & Catalog (`/api/v1/products`)
 - `GET /api/v1/products` $\rightarrow$ List all products (returns `imageUrl` for POS cover + `images: [...]` list)
@@ -205,6 +205,17 @@ npm run dev
 - `POST /api/v1/users` $\rightarrow$ Create new system user
 - `PUT /api/v1/users/{id}` $\rightarrow$ Update user credentials / role
 - `DELETE /api/v1/users/{id}` $\rightarrow$ Delete user account
+
+> User-management endpoints and catalog mutations require `ROLE_ADMIN`. Authenticated users may read catalog data, while profile access is restricted to the current user or an administrator.
+
+## Current Role and Route Model
+
+- Public `/` renders the blank landing page without requiring an account.
+- Standard users are redirected to `/landing` after login and use the navbar-only layout.
+- Administrators are redirected to `/dashboard` and use the management sidebar.
+- Admin-only pages: `/dashboard`, `/categories`, `/suppliers`, and `/users`.
+- Shared authenticated pages: `/products`, `/pos`, and `/profile`.
+- The role and page-access updates were merged from `Mongkol7` into `develop`.
 
 ---
 

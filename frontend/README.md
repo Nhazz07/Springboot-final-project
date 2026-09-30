@@ -24,30 +24,41 @@ A modern, high-performance Single Page Application (SPA) built with **React 19**
    - Quick-switch developer login pills (`mongkol`, `nhazz`, `admin`).
    - Stateless JWT Bearer token management with Axios request interceptors.
 
-2. **Executive BI Dashboard (`/`)**:
+2. **Public User Landing (`/`)**:
+   - Blank landing canvas available before authentication.
+   - Visitors see a lightweight navbar with a sign-in action.
+   - Standard users are redirected to `/landing` after login.
+
+3. **Executive BI Dashboard (`/dashboard`)**:
    - Live KPI cards: Total Inventory Valuation, Active Product SKUs, Low-Stock Radar, and Gross Sales.
    - Direct launch action to Point of Sale (POS) station.
 
-3. **Product Catalog & Multi-Image Cloudinary Hub (`/products`)**:
+4. **Product Catalog & Multi-Image Cloudinary Hub (`/products`)**:
    - Responsive grid view with cover photo badges and list table view.
    - Dynamic real-time search and category filtering.
    - Multi-image upload on product creation and editing.
    - Interactive in-modal photo gallery: set primary cover photo with 1-click or delete individual photos.
    - Cloudinary folder targeting: `etec_springboot_final_project/etec_springboot_final_project_product`.
 
-4. **Category & Supplier Directory (`/categories`, `/suppliers`)**:
+5. **Category & Supplier Directory (`/categories`, `/suppliers`)**:
    - Modal-based CRUD operations with uniqueness safeguards.
    - Supplier logo upload targeting `etec_springboot_final_project_supplier` with automatic cloud replacement.
 
-5. **Profile & Account Settings (`/profile`)**:
-   - Direct Cloudinary avatar upload with instant navbar & sidebar synchronization (`etec_springboot_final_project_profile`).
+6. **Profile & Account Settings (`/profile`)**:
+   - Direct Cloudinary avatar upload with role-aware navbar/sidebar synchronization (`etec_springboot_final_project_profile`).
    - Email updates and role verification.
 
-6. **Point of Sale (POS) Station (`/pos`)** *(Module assigned to Nhazz)*:
+7. **Point of Sale (POS) Station (`/pos`)** *(Module assigned to Nhazz)*:
    - Barcode/SKU search, live cart calculation, and receipt generation.
 
-7. **Order History & Restocking (`/orders`)** *(Module assigned to Nhazz)*:
+8. **Order History & Restocking (`/orders`)** *(Module assigned to Nhazz)*:
    - Order tracking with cancellation and automated stock restoral.
+
+### Role-based page model
+
+- **Admins**: `/dashboard`, `/products`, `/categories`, `/suppliers`, `/users`, and the admin sidebar.
+- **Standard users**: blank `/landing`, `/products`, `/pos`, `/profile`, and the navbar-only layout.
+- **Shared protection**: unauthorized admin pages redirect standard users to `/landing`; admins visiting `/landing` are redirected to `/dashboard`.
 
 ---
 
