@@ -1,12 +1,18 @@
 import { useState, useEffect } from "react";
 import { ShoppingCart } from "lucide-react";
-
+import {useAuth} from "../context/AuthContext.jsx"
+import {createOrder as createOrderApi} from "../services/orderApi.js";
 import { getProducts } from "../services/productApi.js";
 
 import ProductCard from "../components/ProductCard";
 import CartDrawer from "../components/CartDrawer";
+import OrderConfirmation from "../components/OrderConfirmation";
 
 function POS() {
+    // Authentication
+
+    const { user, token } = useAuth();
+
     // Product State
 
     const [products, setProducts] = useState([]);
@@ -17,6 +23,10 @@ function POS() {
 
     const [cart, setCart] = useState([]);
     const [cartOpen, setCartOpen] = useState(false);
+
+    // Order Confirmation State
+
+    const [createdOrder, setCreatedOrder] = useState(null);
 
     // Load Products
 
@@ -120,6 +130,7 @@ function POS() {
                 .filter((item) => item.quantity > 0)
         );
     };
+
     // Remove Product
 
     const removeFromCart = (id) => {
@@ -128,17 +139,80 @@ function POS() {
         );
     };
 
-
     // Create Order
 
+    const createOrder = async () => {
+        // Don't create an empty order
+        if (cart.length === 0) {
+            return;
+        }
 
-    const createOrder = () => {
-        console.log("Order:", cart);
+        // Make sure user is logged in
+        if (!user?.userId) {
+            alert("You must be logged in to create an order.");
+            return;
+        }
 
-        alert("Order created successfully!");
+        // Make sure token exists
+        if (!token) {
+            alert("Authentication token not found. Please login again.");
+            return;
+        }
 
-        setCart([]);
-        setCartOpen(false);
+        try {
+            // Prepare order data for backend
+            const orderData = {
+                userId: user.userId,
+                notes: "POS order",
+                items: cart.map((item) => ({
+                    productId: item.id,
+                    quantity: item.quantity,
+                })),
+            };
+
+            console.log("Sending order:", orderData);
+
+            // Send order to Spring Boot
+            const order = await createOrderApi(
+                orderData,
+                token
+            );
+
+            console.log("Created order:", order);
+
+            // Save created order
+            setCreatedOrder(order);
+
+            // Clear cart
+            setCart([]);
+
+            // Close cart drawer
+            setCartOpen(false);
+
+            // Refresh products to get updated stock
+            const updatedProducts = await getProducts();
+
+            const formattedProducts = updatedProducts.map((product) => ({
+                id: product.id,
+                name: product.name,
+                category: product.categoryName,
+                price: Number(product.price),
+                stock: product.quantity,
+                imageUrl: product.imageUrl,
+            }));
+
+            setProducts(formattedProducts);
+
+        } catch (error) {
+            console.error("Failed to create order:", error);
+
+            const message =
+                error.response?.data?.message ||
+                error.response?.data?.error ||
+                "Failed to create order.";
+
+            alert(message);
+        }
     };
 
     // Cart Item Count
@@ -153,12 +227,13 @@ function POS() {
     return (
         <div className="min-h-screen bg-gray-50">
 
-            {/*header*/}
+            {/* Header */}
 
             <header className="border-b bg-white">
                 <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
 
                     {/* Title */}
+
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">
                             Point of Sale
@@ -170,6 +245,7 @@ function POS() {
                     </div>
 
                     {/* Cart Button */}
+
                     <button
                         onClick={() => setCartOpen(true)}
                         className="relative flex items-center gap-2 rounded-xl bg-black px-5 py-3 font-medium text-white hover:bg-gray-800"
@@ -188,11 +264,12 @@ function POS() {
                 </div>
             </header>
 
-            {/*product*/}
+            {/* Products */}
 
             <main className="mx-auto max-w-7xl px-6 py-8">
 
                 {/* Loading */}
+
                 {loading && (
                     <div className="py-20 text-center text-gray-500">
                         Loading products...
@@ -200,6 +277,7 @@ function POS() {
                 )}
 
                 {/* Error */}
+
                 {error && (
                     <div className="rounded-xl bg-red-50 p-4 text-center text-red-600">
                         {error}
@@ -207,6 +285,7 @@ function POS() {
                 )}
 
                 {/* Product Grid */}
+
                 {!loading && !error && (
                     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 
@@ -223,7 +302,7 @@ function POS() {
 
             </main>
 
-            {/*Cart drawer*/}
+            {/* Cart Drawer */}
 
             {cartOpen && (
                 <CartDrawer
@@ -233,6 +312,15 @@ function POS() {
                     onDecrease={decreaseQuantity}
                     onRemove={removeFromCart}
                     onCreateOrder={createOrder}
+                />
+            )}
+
+            {/* Order Confirmation */}
+
+            {createdOrder && (
+                <OrderConfirmation
+                    order={createdOrder}
+                    onClose={() => setCreatedOrder(null)}
                 />
             )}
 
