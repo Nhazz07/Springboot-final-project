@@ -1,8 +1,15 @@
 import React from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { CreditCard, LogOut, Plus, Radio, ShoppingBag, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-
+import {
+  CreditCard,
+  LogOut,
+  Plus,
+  Radio,
+  ShoppingBag,
+  ShoppingCart,
+  User
+} from 'lucide-react';
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -12,10 +19,15 @@ const Navbar = () => {
     ? [
         { name: 'Storefront', path: '/landing', icon: ShoppingBag },
         { name: 'Catalog', path: '/products', icon: ShoppingBag },
-        { name: 'POS', path: '/pos', icon: CreditCard },
+        { name: 'Cart', path: '/cart', icon: ShoppingCart },
         { name: 'Profile', path: '/profile', icon: User },
       ]
-    : [{ name: 'Sign In', path: '/login', icon: User }];
+      : [
+        { name: 'Storefront', path: '/', icon: ShoppingBag },
+        { name: 'Catalog', path: '/catalog', icon: ShoppingBag },
+        { name: 'Cart', path: '/cart', icon: ShoppingCart },
+        { name: 'Sign In', path: '/login', icon: User },
+      ];
 
   const getPageTitle = () => {
     switch (location.pathname) {
