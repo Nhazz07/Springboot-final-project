@@ -6,44 +6,68 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "../context/AuthContext.jsx";
+
 import {
     getOrders,
     getOrderById,
+    cancelOrder,
 } from "../services/orderHistoryApi.js";
 
-import OrderDetails from "../components/OrderDetails";
+import OrderDetails from "../components/OrderDetails.jsx";
 
 function Orders() {
+
     const { token } = useAuth();
 
+    // Orders State
+
     const [orders, setOrders] = useState([]);
+
     const [loading, setLoading] = useState(true);
+
     const [error, setError] = useState("");
+
     const [statusFilter, setStatusFilter] = useState("ALL");
 
-    // Selected Order
+    // Selected Order State
 
     const [selectedOrder, setSelectedOrder] = useState(null);
+
     const [detailsLoading, setDetailsLoading] = useState(false);
 
-    // Load Orders
+    // Cancellation State
+
+    const [cancelling, setCancelling] = useState(false);
+
+    // load order
 
     const loadOrders = async () => {
+
         if (!token) {
+
             setError("Authentication token not found.");
+
             setLoading(false);
+
             return;
         }
 
         try {
+
             setLoading(true);
+
             setError("");
 
             const data = await getOrders(token);
 
             setOrders(data || []);
+
         } catch (error) {
-            console.error("Failed to load orders:", error);
+
+            console.error(
+                "Failed to load orders:",
+                error
+            );
 
             const message =
                 error.response?.data?.message ||
@@ -51,24 +75,44 @@ function Orders() {
                 "Failed to load orders.";
 
             setError(message);
+
         } finally {
+
             setLoading(false);
         }
     };
+    // load order when a token changes
 
     useEffect(() => {
+
         loadOrders();
+
     }, [token]);
 
-    // View Order Details
+    // filter order
+
+    const filteredOrders =
+        statusFilter === "ALL"
+            ? orders
+            : orders.filter(
+                (order) =>
+                    order.status === statusFilter
+            );
+    // view order details
 
     const viewOrder = async (id) => {
+
         if (!token) {
-            alert("Authentication token not found.");
+
+            alert(
+                "Authentication token not found."
+            );
+
             return;
         }
 
         try {
+
             setDetailsLoading(true);
 
             const order = await getOrderById(
@@ -77,9 +121,11 @@ function Orders() {
             );
 
             setSelectedOrder(order);
+
         } catch (error) {
+
             console.error(
-                "Failed to load order details:",
+                "Failed to load order:",
                 error
             );
 
@@ -89,60 +135,133 @@ function Orders() {
                 "Failed to load order details.";
 
             alert(message);
+
         } finally {
+
             setDetailsLoading(false);
         }
     };
 
-    // Filter Orders
+    // cancel order
 
-    const filteredOrders =
-        statusFilter === "ALL"
-            ? orders
-            : orders.filter(
-                (order) => order.status === statusFilter
+    const handleCancelOrder = async () => {
+
+        if (!selectedOrder) {
+            return;
+        }
+
+        if (!token) {
+
+            alert(
+                "Authentication token not found."
             );
 
-    // Format Date
+            return;
+        }
+
+        const confirmed = window.confirm(
+            `Are you sure you want to cancel ${selectedOrder.orderNumber}?`
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+
+            setCancelling(true);
+
+            const updatedOrder =
+                await cancelOrder(
+                    selectedOrder.id,
+                    token
+                );
+
+            // Update order inside modal
+            setSelectedOrder(updatedOrder);
+
+            // Refresh order history
+            await loadOrders();
+
+            alert(
+                "Order cancelled successfully. Product stock has been restored."
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Failed to cancel order:",
+                error
+            );
+
+            const message =
+                error.response?.data?.message ||
+                error.response?.data?.error ||
+                "Failed to cancel order.";
+
+            alert(message);
+
+        } finally {
+
+            setCancelling(false);
+        }
+    };
+
+
+    // form data
 
     const formatDate = (date) => {
+
         if (!date) {
             return "N/A";
         }
 
-        return new Date(date).toLocaleString();
+        return new Date(
+            date
+        ).toLocaleString();
     };
 
-    // Status Style
+    // status style
 
     const getStatusStyle = (status) => {
+
         switch (status) {
+
             case "PENDING":
+
                 return "bg-yellow-100 text-yellow-700";
 
             case "COMPLETED":
+
                 return "bg-green-100 text-green-700";
 
             case "CANCELLED":
+
                 return "bg-red-100 text-red-700";
 
             case "PROCESSING":
+
                 return "bg-blue-100 text-blue-700";
 
             default:
+
                 return "bg-gray-100 text-gray-700";
         }
     };
 
-    return (
-        <div className="min-h-screen bg-gray-50">
+           // ui
 
-            {/* Header */}
+    return (
+
+        <div className="min-h-screen bg-gray-50">
+                  {/*header*/}
 
             <header className="border-b bg-white">
+
                 <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
 
                     <div>
+
                         <h1 className="text-2xl font-bold text-gray-900">
                             Orders
                         </h1>
@@ -150,13 +269,18 @@ function Orders() {
                         <p className="mt-1 text-sm text-gray-500">
                             View and manage your orders.
                         </p>
+
                     </div>
+
+
+                    {/* Refresh */}
 
                     <button
                         onClick={loadOrders}
                         disabled={loading}
                         className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
+
                         <RefreshCw
                             size={17}
                             className={
@@ -167,16 +291,20 @@ function Orders() {
                         />
 
                         Refresh
+
                     </button>
 
                 </div>
+
             </header>
 
-            {/* Main */}
+
+          {/*main*/}
 
             <main className="mx-auto max-w-7xl px-6 py-8">
 
-                {/* Status Filters */}
+
+             {/*status figure*/}
 
                 <div className="mb-6 flex flex-wrap gap-2">
 
@@ -187,6 +315,7 @@ function Orders() {
                         "COMPLETED",
                         "CANCELLED",
                     ].map((status) => (
+
                         <button
                             key={status}
                             onClick={() =>
@@ -198,20 +327,25 @@ function Orders() {
                                     : "bg-white text-gray-600 hover:bg-gray-100"
                             }`}
                         >
+
                             {status === "ALL"
                                 ? "All"
                                 : status.charAt(0) +
                                 status
                                     .slice(1)
                                     .toLowerCase()}
+
                         </button>
+
                     ))}
 
                 </div>
 
-                {/* Loading */}
+
+             {/*loading*/}
 
                 {loading && (
+
                     <div className="flex flex-col items-center justify-center py-20 text-gray-500">
 
                         <RefreshCw
@@ -224,11 +358,14 @@ function Orders() {
                         </p>
 
                     </div>
+
                 )}
 
-                {/* Error */}
+
+            {/*error*/}
 
                 {!loading && error && (
+
                     <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center text-red-600">
 
                         <p className="font-medium">
@@ -243,13 +380,18 @@ function Orders() {
                         </button>
 
                     </div>
+
                 )}
 
-                {/* Empty */}
+
+                {/* ==================================
+                    No Orders
+                ================================== */}
 
                 {!loading &&
                     !error &&
                     filteredOrders.length === 0 && (
+
                         <div className="rounded-2xl border border-gray-200 bg-white py-20 text-center">
 
                             <Package
@@ -266,13 +408,16 @@ function Orders() {
                             </p>
 
                         </div>
+
                     )}
 
-                {/* Orders */}
+
+                {/*order table*/}
 
                 {!loading &&
                     !error &&
                     filteredOrders.length > 0 && (
+
                         <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
 
                             {/* Table Header */}
@@ -305,6 +450,7 @@ function Orders() {
 
                             </div>
 
+
                             {/* Order Rows */}
 
                             <div className="divide-y divide-gray-100">
@@ -317,98 +463,106 @@ function Orders() {
                                             className="grid gap-4 px-6 py-5 transition hover:bg-gray-50 md:grid-cols-6 md:items-center"
                                         >
 
-                                            {/* Order Number */}
+                                            {/* Order */}
 
                                             <div>
+
                                                 <p className="text-sm font-semibold text-gray-900">
-                                                    {
-                                                        order.orderNumber
-                                                    }
+                                                    {order.orderNumber}
                                                 </p>
 
                                                 <p className="mt-1 text-xs text-gray-400">
-                                                    ID:{" "}
-                                                    {
-                                                        order.id
-                                                    }
+                                                    ID: {order.id}
                                                 </p>
+
                                             </div>
+
 
                                             {/* Customer */}
 
                                             <div>
+
                                                 <p className="text-sm font-medium text-gray-700">
-                                                    {
-                                                        order.username ||
-                                                        "N/A"
-                                                    }
+                                                    {order.username ||
+                                                        "N/A"}
                                                 </p>
 
                                                 <p className="text-xs text-gray-400">
                                                     User #
-                                                    {
-                                                        order.userId
-                                                    }
+                                                    {order.userId}
                                                 </p>
+
                                             </div>
+
 
                                             {/* Items */}
 
                                             <div>
+
                                                 <p className="text-sm font-medium text-gray-700">
-                                                    {
-                                                        order
-                                                            .items
-                                                            ?.length ||
-                                                        0
-                                                    }{" "}
-                                                    {
-                                                        order
-                                                            .items
-                                                            ?.length ===
-                                                        1
-                                                            ? "item"
-                                                            : "items"
-                                                    }
+
+                                                    {order.items?.length ||
+                                                        0}
+
+                                                    {" "}
+
+                                                    {order.items?.length ===
+                                                    1
+                                                        ? "item"
+                                                        : "items"}
+
                                                 </p>
+
                                             </div>
+
 
                                             {/* Total */}
 
                                             <div>
+
                                                 <p className="text-sm font-bold text-gray-900">
+
                                                     $
                                                     {Number(
                                                         order.totalAmount
                                                     ).toFixed(
                                                         2
                                                     )}
+
                                                 </p>
+
                                             </div>
+
 
                                             {/* Status */}
 
                                             <div>
+
                                                 <span
                                                     className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getStatusStyle(
                                                         order.status
                                                     )}`}
                                                 >
-                                                    {
-                                                        order.status
-                                                    }
+
+                                                    {order.status}
+
                                                 </span>
+
                                             </div>
+
 
                                             {/* Date + View */}
 
                                             <div className="flex items-center justify-between md:justify-end md:gap-4">
 
                                                 <span className="text-sm text-gray-500">
+
                                                     {formatDate(
                                                         order.createdAt
                                                     )}
+
                                                 </span>
+
 
                                                 <button
                                                     onClick={() =>
@@ -422,35 +576,44 @@ function Orders() {
                                                     className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-50"
                                                     title="View order"
                                                 >
+
                                                     <Eye
-                                                        size={
-                                                            18
-                                                        }
+                                                        size={18}
                                                     />
+
                                                 </button>
 
                                             </div>
 
                                         </div>
+
                                     )
                                 )}
 
                             </div>
 
                         </div>
+
                     )}
 
             </main>
-
-            {/* Order Details */}
+            {/*order detail*/}
 
             {selectedOrder && (
+
                 <OrderDetails
                     order={selectedOrder}
                     onClose={() =>
                         setSelectedOrder(null)
                     }
+                    onCancel={
+                        handleCancelOrder
+                    }
+                    cancelling={
+                        cancelling
+                    }
                 />
+
             )}
 
         </div>
