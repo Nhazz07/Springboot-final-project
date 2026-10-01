@@ -122,13 +122,55 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public OrderResponse updateOrderStatus(Long id, OrderStatus status) {
+
         Order order = orderRepository.findByIdWithDetails(id).orElseThrow(() ->
                 new RuntimeException("Order Not Found!")
+        );
+
+        /*
+         * Cancellation + Restock
+         *
+         * Only PENDING orders can be cancelled.
+         */
+        if (status == OrderStatus.CANCELLED) {
+
+            // Prevent cancelling an already cancelled order
+            if (order.getStatus() == OrderStatus.CANCELLED) {
+                throw new RuntimeException(
+                        "Order is already cancelled."
                 );
+            }
+
+            // Only pending orders can be cancelled
+            if (order.getStatus() != OrderStatus.PENDING) {
+                throw new RuntimeException(
+                        "Only pending orders can be cancelled."
+                );
+            }
+
+            /*
+             * Return each ordered quantity
+             * back to the product stock.
+             */
+            for (OrderItem orderItem : order.getOrderItems()) {
+
+                Product product = orderItem.getProduct();
+
+                product.setQuantity(
+                        product.getQuantity()
+                                + orderItem.getQuantity()
+                );
+
+                productRepository.save(product);
+            }
+        }
+
+        // Update order status
         order.setStatus(status);
 
+        // Save updated order
         Order updatedOrder = orderRepository.save(order);
 
         return orderMapper.toResponse(updatedOrder);
