@@ -5,12 +5,14 @@ import com.example.inventorymanagementsystem.dto.request.ProductRequest;
 import com.example.inventorymanagementsystem.dto.response.ProductResponse;
 import com.example.inventorymanagementsystem.entity.Category;
 import com.example.inventorymanagementsystem.entity.Product;
+import com.example.inventorymanagementsystem.entity.StockBatch;
 import com.example.inventorymanagementsystem.entity.Supplier;
 import com.example.inventorymanagementsystem.exception.BadRequestException;
 import com.example.inventorymanagementsystem.exception.ResourceNotFoundException;
 import com.example.inventorymanagementsystem.mapper.ProductMapper;
 import com.example.inventorymanagementsystem.repository.CategoryRepository;
 import com.example.inventorymanagementsystem.repository.ProductRepository;
+import com.example.inventorymanagementsystem.repository.StockBatchRepository;
 import com.example.inventorymanagementsystem.repository.SupplierRepository;
 import com.example.inventorymanagementsystem.service.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -27,6 +30,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final SupplierRepository supplierRepository;
+    private final StockBatchRepository stockBatchRepository;
     private final ProductMapper productMapper;
     private final CloudinaryService cloudinaryService;
 
@@ -53,28 +57,56 @@ public class ProductServiceImpl implements ProductService {
         Product product = productMapper.toEntity(request, category, supplier);
         product.setName(name);
 
+        List<MultipartFile> allFiles = new ArrayList<>();
+        if (files != null && !files.isEmpty()) {
+            allFiles.addAll(files);
+        } else if (request != null) {
+            if (request.getFiles() != null && !request.getFiles().isEmpty()) {
+                allFiles.addAll(request.getFiles());
+            } else if (request.getFile() != null && !request.getFile().isEmpty()) {
+                allFiles.add(request.getFile());
+            }
+        }
+
         List<String> uploadedUrls = new ArrayList<>();
-        if (files != null) {
-            for (MultipartFile f : files) {
-                if (f != null && !f.isEmpty()) {
-                    Map<?, ?> uploadResult = cloudinaryService.uploadProductImage(f);
-                    String secureUrl = (String) uploadResult.get("secure_url");
-                    if (secureUrl != null) {
-                        uploadedUrls.add(secureUrl);
-                    }
+        for (MultipartFile f : allFiles) {
+            if (f != null && !f.isEmpty()) {
+                Map<?, ?> uploadResult = cloudinaryService.uploadProductImage(f);
+                String secureUrl = (String) uploadResult.get("secure_url");
+                if (secureUrl != null && !uploadedUrls.contains(secureUrl)) {
+                    uploadedUrls.add(secureUrl);
                 }
             }
         }
 
         if (!uploadedUrls.isEmpty()) {
-            product.setImages(new ArrayList<>(uploadedUrls));
+            product.setImages(new ArrayList<>(new LinkedHashSet<>(uploadedUrls)));
             product.setImageUrl(uploadedUrls.get(0));
+        } else if (request.getImages() != null && !request.getImages().isEmpty()) {
+            List<String> uniqueImages = new ArrayList<>(new LinkedHashSet<>(request.getImages()));
+            product.setImages(uniqueImages);
+            product.setImageUrl(request.getImageUrl() != null && !request.getImageUrl().isBlank()
+                    ? request.getImageUrl() : uniqueImages.get(0));
         } else if (request.getImageUrl() != null && !request.getImageUrl().isBlank()) {
             product.setImageUrl(request.getImageUrl());
             product.setImages(new ArrayList<>(List.of(request.getImageUrl())));
         }
 
         Product saved = productRepository.save(product);
+
+        // Initialize FIFO Stock Batch
+        if (saved.getQuantity() != null && saved.getQuantity() > 0) {
+            StockBatch initialBatch = StockBatch.builder()
+                    .batchNumber("BATCH-" + saved.getId() + "-INIT")
+                    .product(saved)
+                    .initialQuantity(saved.getQuantity())
+                    .remainingQuantity(saved.getQuantity())
+                    .costPrice(saved.getCostPrice())
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            stockBatchRepository.save(initialBatch);
+        }
+
         return productMapper.toResponse(saved);
     }
 
@@ -153,6 +185,8 @@ public class ProductServiceImpl implements ProductService {
             product.setSupplier(supplier);
         }
 
+        int oldQuantity = java.util.Objects.requireNonNullElse(product.getQuantity(), 0);
+
         product.setName(name);
         product.setDescription(request.getDescription());
         product.setCostPrice(request.getCostPrice());
@@ -171,15 +205,24 @@ public class ProductServiceImpl implements ProductService {
         }
 
         // Upload and append new images if provided
+        List<MultipartFile> allFiles = new ArrayList<>();
+        if (files != null && !files.isEmpty()) {
+            allFiles.addAll(files);
+        } else if (request != null) {
+            if (request.getFiles() != null && !request.getFiles().isEmpty()) {
+                allFiles.addAll(request.getFiles());
+            } else if (request.getFile() != null && !request.getFile().isEmpty()) {
+                allFiles.add(request.getFile());
+            }
+        }
+
         List<String> newUploadedUrls = new ArrayList<>();
-        if (files != null) {
-            for (MultipartFile f : files) {
-                if (f != null && !f.isEmpty()) {
-                    Map<?, ?> uploadResult = cloudinaryService.uploadProductImage(f);
-                    String secureUrl = (String) uploadResult.get("secure_url");
-                    if (secureUrl != null) {
-                        newUploadedUrls.add(secureUrl);
-                    }
+        for (MultipartFile f : allFiles) {
+            if (f != null && !f.isEmpty()) {
+                Map<?, ?> uploadResult = cloudinaryService.uploadProductImage(f);
+                String secureUrl = (String) uploadResult.get("secure_url");
+                if (secureUrl != null && !newUploadedUrls.contains(secureUrl)) {
+                    newUploadedUrls.add(secureUrl);
                 }
             }
         }
@@ -188,7 +231,11 @@ public class ProductServiceImpl implements ProductService {
             if (product.getImages() == null) {
                 product.setImages(new ArrayList<>());
             }
-            product.getImages().addAll(newUploadedUrls);
+            for (String u : newUploadedUrls) {
+                if (!product.getImages().contains(u)) {
+                    product.getImages().add(u);
+                }
+            }
             if (product.getImageUrl() == null || product.getImageUrl().isBlank()) {
                 product.setImageUrl(newUploadedUrls.get(0));
             }
@@ -209,6 +256,35 @@ public class ProductServiceImpl implements ProductService {
         }
 
         Product updated = productRepository.save(product);
+
+        Integer newQtyObj = request.getQuantity();
+        int newQuantity = newQtyObj != null ? newQtyObj : 0;
+        int diff = newQuantity - oldQuantity;
+        if (diff > 0) {
+            // Additional inventory received: create a new FIFO inbound stock batch
+            StockBatch restockBatch = StockBatch.builder()
+                    .batchNumber("BATCH-" + updated.getId() + "-" + System.currentTimeMillis())
+                    .product(updated)
+                    .initialQuantity(diff)
+                    .remainingQuantity(diff)
+                    .costPrice(request.getCostPrice() != null ? request.getCostPrice() : updated.getCostPrice())
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            stockBatchRepository.save(restockBatch);
+        } else if (diff < 0) {
+            // Stock manually reduced by admin (e.g., damaged/write-off): deduct from oldest active batches
+            int toDeduct = Math.abs(diff);
+            List<StockBatch> activeBatches = stockBatchRepository.findActiveBatchesByProductIdFifo(updated.getId());
+            for (StockBatch batch : activeBatches) {
+                if (toDeduct <= 0) break;
+                if (batch.getRemainingQuantity() <= 0) continue;
+                int deductAmount = Math.min(batch.getRemainingQuantity(), toDeduct);
+                batch.setRemainingQuantity(batch.getRemainingQuantity() - deductAmount);
+                stockBatchRepository.save(batch);
+                toDeduct -= deductAmount;
+            }
+        }
+
         return productMapper.toResponse(updated);
     }
 

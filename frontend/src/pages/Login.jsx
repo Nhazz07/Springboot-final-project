@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Lock, User, Mail, ArrowRight, ShieldCheck, Sparkles, AlertCircle, Check } from 'lucide-react';
+import { Lock, User, Mail, ArrowRight, ShieldCheck, Sparkles, AlertCircle, Check, ShoppingBag } from 'lucide-react';
 
 const Login = () => {
   const [mode, setMode] = useState('login'); // 'login' | 'signup'
@@ -270,6 +270,22 @@ const Login = () => {
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
+            </button>
+
+            {/* Continue as Guest Button */}
+            <div className="relative my-3 flex items-center justify-center">
+              <div className="border-t border-black/8 w-full" />
+              <span className="bg-white px-3 text-[11px] font-semibold text-[#86868b] uppercase tracking-wider">or</span>
+              <div className="border-t border-black/8 w-full" />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              className="w-full py-2.5 px-4 rounded-full font-medium text-sm text-[#1d1d1f] bg-[#f5f5f7] hover:bg-[#ebebee] border border-black/8 transition-all duration-200 flex items-center justify-center gap-2 active:scale-[0.98] shadow-xs"
+            >
+              <ShoppingBag className="w-4 h-4 text-[#1d1d1f]" />
+              <span>Continue as Guest</span>
             </button>
           </form>
 

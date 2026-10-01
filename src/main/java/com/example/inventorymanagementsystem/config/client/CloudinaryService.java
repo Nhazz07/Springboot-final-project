@@ -40,16 +40,27 @@ public class CloudinaryService {
         String targetFolder = (folderName != null && !folderName.isBlank()) ? folderName : defaultFolder;
         try {
             log.info("Uploading file to Cloudinary folder: {}", targetFolder);
-            return cloudinary.uploader().upload(
-                    file.getBytes(),
-                    ObjectUtils.asMap(
-                            "folder", targetFolder,
-                            "asset_folder", targetFolder,
-                            "use_asset_folder_as_public_id_prefix", true,
-                            "resource_type", "auto"
-                    )
-            );
-        } catch (IOException e) {
+            try {
+                return cloudinary.uploader().upload(
+                        file.getBytes(),
+                        ObjectUtils.asMap(
+                                "folder", targetFolder,
+                                "asset_folder", targetFolder,
+                                "use_asset_folder_as_public_id_prefix", true,
+                                "resource_type", "auto"
+                        )
+                );
+            } catch (Exception paramEx) {
+                log.warn("Upload with dynamic asset_folder failed, retrying with standard folder: {}", paramEx.getMessage());
+                return cloudinary.uploader().upload(
+                        file.getBytes(),
+                        ObjectUtils.asMap(
+                                "folder", targetFolder,
+                                "resource_type", "auto"
+                        )
+                );
+            }
+        } catch (Exception e) {
             log.error("Failed to upload image to Cloudinary folder {}: {}", targetFolder, e.getMessage());
             throw new BadRequestException("Failed to upload image to Cloudinary: " + e.getMessage());
         }

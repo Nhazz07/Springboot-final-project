@@ -6,6 +6,7 @@ import {
     Package,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import CartNotificationToast from "../components/common/CartNotificationToast";
 
 import { getProducts } from "../services/customerApi";
 
@@ -18,6 +19,34 @@ function Catalog() {
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [toastProduct, setToastProduct] = useState(null);
+
+    // Real-time cart state for dynamic live stock deduction
+    const [cart, setCart] = useState(() => {
+        try {
+            return JSON.parse(localStorage.getItem("cart") || "[]");
+        } catch (e) {
+            return [];
+        }
+    });
+
+    // Synchronize cart state on changes across app tabs or components
+    useEffect(() => {
+        const handleCartSync = () => {
+            try {
+                setCart(JSON.parse(localStorage.getItem("cart") || "[]"));
+            } catch (e) {
+                setCart([]);
+            }
+        };
+
+        window.addEventListener("cart-updated", handleCartSync);
+        window.addEventListener("storage", handleCartSync);
+        return () => {
+            window.removeEventListener("cart-updated", handleCartSync);
+            window.removeEventListener("storage", handleCartSync);
+        };
+    }, []);
 
     // ==========================================
     // LOAD PRODUCTS
@@ -78,46 +107,48 @@ function Catalog() {
     }, [products, search, category]);
 
     // ==========================================
-    // ADD TO CART
+    // ADD TO CART (REAL-TIME STOCK DEDUCT & LIMIT)
     // ==========================================
 
     const addToCart = (product) => {
-        if (product.quantity <= 0) {
-            return;
-        }
-
-        const cart = JSON.parse(
+        const currentCart = JSON.parse(
             localStorage.getItem("cart") || "[]"
         );
 
-        const existing = cart.find(
+        const existing = currentCart.find(
             (item) => item.id === product.id
         );
 
+        const inCartQty = existing ? existing.quantity : 0;
+        const totalStock = product.quantity || 0;
+
+        // Stop when out of stock / max available reached
+        if (inCartQty >= totalStock || totalStock <= 0) {
+            return;
+        }
+
         if (existing) {
-            if (
-                existing.quantity <
-                product.quantity
-            ) {
-                existing.quantity += 1;
-            }
+            existing.quantity += 1;
         } else {
-            cart.push({
+            currentCart.push({
                 id: product.id,
                 name: product.name,
                 price: Number(product.price),
                 quantity: 1,
-                stock: product.quantity,
+                stock: totalStock,
                 imageUrl: product.imageUrl,
             });
         }
 
         localStorage.setItem(
             "cart",
-            JSON.stringify(cart)
+            JSON.stringify(currentCart)
         );
+        // Instantly update local state so visible stock decrements on screen
+        setCart(currentCart);
 
-        navigate("/cart");
+        window.dispatchEvent(new Event("cart-updated"));
+        setToastProduct({ ...product, addedQuantity: 1 });
     };
 
     // ==========================================
@@ -271,55 +302,50 @@ function Catalog() {
                 <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 
                     {filteredProducts.map((product) => {
-
-                        const outOfStock =
-                            product.quantity <= 0;
+                        const cartItem = cart.find((item) => item.id === product.id);
+                        const inCartQty = cartItem ? cartItem.quantity : 0;
+                        const availableStock = Math.max(0, (product.quantity || 0) - inCartQty);
+                        const outOfStock = availableStock <= 0;
 
                         return (
-
                             <div
                                 key={product.id}
                                 className="overflow-hidden rounded-2xl border border-gray-200 bg-white transition hover:-translate-y-1 hover:shadow-md"
                             >
-
                                 {/* IMAGE */}
-
-                                <div className="flex h-56 items-center justify-center bg-gray-50 p-5">
-
+                                <div
+                                    onClick={() => navigate(`/products/${product.id}`)}
+                                    className="flex h-56 items-center justify-center bg-gray-50 p-5 cursor-pointer group"
+                                >
                                     {product.imageUrl ? (
-
                                         <img
                                             src={product.imageUrl}
                                             alt={product.name}
-                                            className="h-full w-full object-contain"
+                                            className="h-full w-full object-contain transition duration-300 group-hover:scale-105"
                                         />
-
                                     ) : (
-
                                         <Package
                                             size={55}
                                             className="text-gray-300"
                                         />
-
                                     )}
-
                                 </div>
 
                                 {/* INFO */}
-
                                 <div className="p-5">
-
                                     <p className="text-xs font-medium uppercase tracking-wider text-gray-400">
                                         {product.categoryName ||
                                             "Product"}
                                     </p>
 
-                                    <h2 className="mt-1 truncate text-lg font-bold">
+                                    <h2
+                                        onClick={() => navigate(`/products/${product.id}`)}
+                                        className="mt-1 truncate text-lg font-bold cursor-pointer hover:text-black transition"
+                                    >
                                         {product.name}
                                     </h2>
 
                                     <div className="mt-3 flex items-center justify-between">
-
                                         <span className="text-xl font-bold">
                                             $
                                             {Number(
@@ -328,23 +354,22 @@ function Catalog() {
                                         </span>
 
                                         <span
-                                            className={`text-xs font-medium ${
+                                            className={`text-xs font-semibold ${
                                                 outOfStock
                                                     ? "text-red-500"
                                                     : "text-green-600"
                                             }`}
                                         >
                                             {outOfStock
-                                                ? "Out of stock"
-                                                : `${product.quantity} in stock`}
+                                                ? (product.quantity || 0) <= 0
+                                                    ? "Out of stock"
+                                                    : "Cart limit reached"
+                                                : `${availableStock} in stock`}
                                         </span>
-
                                     </div>
 
                                     {/* ACTIONS */}
-
                                     <div className="mt-5 flex gap-2">
-
                                         <button
                                             onClick={() =>
                                                 navigate(
@@ -365,24 +390,27 @@ function Catalog() {
                                                 outOfStock
                                             }
                                             className="flex items-center justify-center rounded-xl bg-black px-4 py-3 text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300"
+                                            title={outOfStock ? "Out of stock / cart limit reached" : "Add to Cart"}
                                         >
                                             <ShoppingCart
                                                 size={18}
                                             />
                                         </button>
-
                                     </div>
-
                                 </div>
-
                             </div>
-
                         );
                     })}
 
                 </div>
 
             )}
+
+            {/* Added to Cart Notification Toast */}
+            <CartNotificationToast
+                product={toastProduct}
+                onClose={() => setToastProduct(null)}
+            />
 
         </div>
     );

@@ -109,6 +109,14 @@ export const productService = {
     });
     return res.data?.data;
   },
+  uploadImage: async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await api.post('/v1/products/upload-image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data?.data;
+  },
 };
 
 // ==================== CATEGORY SERVICE ====================

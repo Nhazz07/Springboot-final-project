@@ -7,6 +7,8 @@ import {
     ShoppingCart,
     Package,
     CreditCard,
+    AlertTriangle,
+    X,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -14,6 +16,10 @@ function Cart() {
     const navigate = useNavigate();
 
     const [cart, setCart] = useState([]);
+    const [deleteConfirmation, setDeleteConfirmation] = useState({
+        isOpen: false,
+        item: null,
+    });
 
     useEffect(() => {
         const savedCart = JSON.parse(
@@ -30,6 +36,7 @@ function Cart() {
             "cart",
             JSON.stringify(newCart)
         );
+        window.dispatchEvent(new Event("cart-updated"));
     };
 
     const increaseQuantity = (id) => {
@@ -51,6 +58,12 @@ function Cart() {
     };
 
     const decreaseQuantity = (id) => {
+        const item = cart.find((i) => i.id === id);
+        if (item && item.quantity === 1) {
+            setDeleteConfirmation({ isOpen: true, item });
+            return;
+        }
+
         const newCart = cart
             .map((item) => {
                 if (item.id !== id) {
@@ -77,6 +90,15 @@ function Cart() {
 
     const clearCart = () => {
         saveCart([]);
+    };
+
+    const confirmDelete = () => {
+        if (deleteConfirmation.item) {
+            removeItem(deleteConfirmation.item.id);
+        } else {
+            clearCart();
+        }
+        setDeleteConfirmation({ isOpen: false, item: null });
     };
 
     const totalItems = cart.reduce(
@@ -130,7 +152,12 @@ function Cart() {
 
                 {cart.length > 0 && (
                     <button
-                        onClick={clearCart}
+                        onClick={() =>
+                            setDeleteConfirmation({
+                                isOpen: true,
+                                item: null,
+                            })
+                        }
                         className="w-fit text-sm font-medium text-red-500 transition hover:text-red-700"
                     >
                         Clear Cart
@@ -140,7 +167,7 @@ function Cart() {
 
             {/* EMPTY CART */}
             {cart.length === 0 ? (
-                <div className="flex min-h-[450px] flex-col items-center justify-center rounded-3xl border border-gray-200 bg-white px-6 text-center">
+                <div className="flex min-h-112.5 flex-col items-center justify-center rounded-3xl border border-gray-200 bg-white px-6 text-center">
 
                     <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gray-100">
                         <ShoppingCart
@@ -218,9 +245,10 @@ function Cart() {
 
                                             <button
                                                 onClick={() =>
-                                                    removeItem(
-                                                        item.id
-                                                    )
+                                                    setDeleteConfirmation({
+                                                        isOpen: true,
+                                                        item,
+                                                    })
                                                 }
                                                 className="rounded-lg p-2 text-gray-400 transition hover:bg-red-50 hover:text-red-500"
                                                 title="Remove item"
@@ -352,6 +380,83 @@ function Cart() {
                             when you place the order.
                         </p>
 
+                    </div>
+                </div>
+            )}
+
+            {/* DELETE CONFIRMATION MODAL */}
+            {deleteConfirmation.isOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in">
+                    <div className="bg-white rounded-3xl w-full max-w-md p-6 border border-black/10 shadow-2xl space-y-5 animate-in zoom-in-95 duration-150">
+                        {/* Header */}
+                        <div className="flex items-start justify-between">
+                            <div className="flex items-center gap-3.5">
+                                <div className="w-12 h-12 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center text-red-600 shrink-0">
+                                    <Trash2 className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-[#1d1d1f]">
+                                        {deleteConfirmation.item ? "Remove from Cart?" : "Clear Shopping Cart?"}
+                                    </h3>
+                                    <p className="text-xs text-[#86868b] mt-0.5">
+                                        {deleteConfirmation.item
+                                            ? "Are you sure you want to remove this item from your cart?"
+                                            : "Are you sure you want to remove all items from your cart?"}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={() => setDeleteConfirmation({ isOpen: false, item: null })}
+                                className="w-8 h-8 rounded-full bg-black/5 hover:bg-black/10 text-[#86868b] hover:text-[#1d1d1f] flex items-center justify-center transition"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        {/* Item Preview (if single item) */}
+                        {deleteConfirmation.item && (
+                            <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-[#f5f5f7] border border-black/5">
+                                <div className="w-14 h-14 rounded-xl bg-white p-1.5 flex items-center justify-center shrink-0 border border-black/5">
+                                    {deleteConfirmation.item.imageUrl ? (
+                                        <img
+                                            src={deleteConfirmation.item.imageUrl}
+                                            alt={deleteConfirmation.item.name}
+                                            className="h-full w-full object-contain"
+                                        />
+                                    ) : (
+                                        <Package className="w-6 h-6 text-gray-400" />
+                                    )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-semibold text-[#1d1d1f] truncate">
+                                        {deleteConfirmation.item.name}
+                                    </p>
+                                    <p className="text-xs text-[#86868b] mt-0.5">
+                                        Qty: {deleteConfirmation.item.quantity} • ${(Number(deleteConfirmation.item.price) * deleteConfirmation.item.quantity).toFixed(2)}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Actions */}
+                        <div className="flex items-center justify-end gap-2.5 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => setDeleteConfirmation({ isOpen: false, item: null })}
+                                className="px-4 py-2.5 rounded-xl border border-black/10 text-sm font-medium text-[#1d1d1f] hover:bg-black/5 transition"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={confirmDelete}
+                                className="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 active:bg-red-800 text-white text-sm font-semibold shadow-md shadow-red-500/20 transition flex items-center gap-2"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                                <span>{deleteConfirmation.item ? "Yes, Remove" : "Yes, Clear All"}</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

@@ -5,8 +5,10 @@ import {
     ArrowRight,
     Package,
     Sparkles,
+    Clock,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import CartNotificationToast from "../components/common/CartNotificationToast";
 import { getProducts } from "../services/productApi";
 
 function UserLanding() {
@@ -17,6 +19,34 @@ function UserLanding() {
     const [category, setCategory] = useState("All");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [toastProduct, setToastProduct] = useState(null);
+
+    // Real-time cart state for live stock deduction
+    const [cart, setCart] = useState(() => {
+        try {
+            return JSON.parse(localStorage.getItem("cart") || "[]");
+        } catch (e) {
+            return [];
+        }
+    });
+
+    // Synchronize cart state on changes across app tabs or components
+    useEffect(() => {
+        const handleCartSync = () => {
+            try {
+                setCart(JSON.parse(localStorage.getItem("cart") || "[]"));
+            } catch (e) {
+                setCart([]);
+            }
+        };
+
+        window.addEventListener("cart-updated", handleCartSync);
+        window.addEventListener("storage", handleCartSync);
+        return () => {
+            window.removeEventListener("cart-updated", handleCartSync);
+            window.removeEventListener("storage", handleCartSync);
+        };
+    }, []);
 
     useEffect(() => {
         const loadProducts = async () => {
@@ -61,36 +91,44 @@ function UserLanding() {
     }, [products, search, category]);
 
     const addToCart = (product) => {
-        const cart = JSON.parse(
+        const currentCart = JSON.parse(
             localStorage.getItem("cart") || "[]"
         );
 
-        const existing = cart.find(
+        const existing = currentCart.find(
             (item) => item.id === product.id
         );
 
+        const inCartQty = existing ? existing.quantity : 0;
+        const totalStock = product.quantity || 0;
+
+        // Stop when out of stock / max available reached
+        if (inCartQty >= totalStock || totalStock <= 0) {
+            return;
+        }
+
         if (existing) {
-            if (existing.quantity < product.quantity) {
-                existing.quantity += 1;
-            }
+            existing.quantity += 1;
         } else {
-            cart.push({
+            currentCart.push({
                 id: product.id,
                 name: product.name,
                 price: Number(product.price),
                 quantity: 1,
-                stock: product.quantity,
+                stock: totalStock,
                 imageUrl: product.imageUrl,
             });
         }
 
         localStorage.setItem(
             "cart",
-            JSON.stringify(cart)
+            JSON.stringify(currentCart)
         );
+        // Instantly update local state so visible stock decrements on screen
+        setCart(currentCart);
 
-        // Go directly to cart
-        navigate("/cart");
+        window.dispatchEvent(new Event("cart-updated"));
+        setToastProduct({ ...product, addedQuantity: 1 });
     };
 
     return (
@@ -118,19 +156,29 @@ function UserLanding() {
                         your cart, and checkout easily.
                     </p>
 
-                    <button
-                        onClick={() =>
-                            document
-                                .getElementById("products")
-                                ?.scrollIntoView({
-                                    behavior: "smooth",
-                                })
-                        }
-                        className="mt-8 inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3.5 font-semibold text-black transition hover:bg-gray-200"
-                    >
-                        Shop Now
-                        <ArrowRight size={18} />
-                    </button>
+                    <div className="mt-8 flex flex-wrap items-center gap-3">
+                        <button
+                            onClick={() =>
+                                document
+                                    .getElementById("products")
+                                    ?.scrollIntoView({
+                                        behavior: "smooth",
+                                    })
+                            }
+                            className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3.5 font-semibold text-black transition hover:bg-gray-200 active:scale-95 shadow-sm"
+                        >
+                            Shop Now
+                            <ArrowRight size={18} />
+                        </button>
+
+                        <button
+                            onClick={() => navigate("/purchase-history")}
+                            className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3.5 font-semibold text-white backdrop-blur-md transition hover:bg-white/20 active:scale-95"
+                        >
+                            <Clock size={17} />
+                            Purchase History
+                        </button>
+                    </div>
                 </div>
 
                 {/* Decorative circles */}
@@ -240,21 +288,22 @@ function UserLanding() {
 
                             {filteredProducts.map(
                                 (product) => {
-                                    const stock =
-                                        product.quantity || 0;
-
-                                    const outOfStock =
-                                        stock <= 0;
+                                    const totalStock = product.quantity || 0;
+                                    const cartItem = cart.find((item) => item.id === product.id);
+                                    const inCartQty = cartItem ? cartItem.quantity : 0;
+                                    const availableStock = Math.max(0, totalStock - inCartQty);
+                                    const outOfStock = availableStock <= 0;
 
                                     return (
                                         <div
                                             key={product.id}
                                             className="group overflow-hidden rounded-2xl border border-gray-200 bg-white transition duration-200 hover:-translate-y-1 hover:shadow-lg"
                                         >
-
                                             {/* IMAGE */}
-                                            <div className="relative flex h-56 items-center justify-center bg-[#f6f6f7] p-6">
-
+                                            <div
+                                                onClick={() => navigate(`/products/${product.id}`)}
+                                                className="relative flex h-56 items-center justify-center bg-[#f6f6f7] p-6 cursor-pointer"
+                                            >
                                                 {product.imageUrl ? (
                                                     <img
                                                         src={
@@ -273,27 +322,27 @@ function UserLanding() {
                                                 )}
 
                                                 {outOfStock && (
-                                                    <div className="absolute left-4 top-4 rounded-full bg-black px-3 py-1 text-xs font-semibold text-white">
-                                                        Out of stock
+                                                    <div className="absolute left-4 top-4 rounded-full bg-black/85 backdrop-blur-xs px-3 py-1 text-xs font-semibold text-white">
+                                                        {totalStock <= 0 ? "Out of stock" : "Cart limit"}
                                                     </div>
                                                 )}
-
                                             </div>
 
                                             {/* INFO */}
                                             <div className="p-5">
-
                                                 <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
                                                     {product.categoryName ||
                                                         "Product"}
                                                 </p>
 
-                                                <h3 className="mt-1 line-clamp-1 text-lg font-semibold">
+                                                <h3
+                                                    onClick={() => navigate(`/products/${product.id}`)}
+                                                    className="mt-1 line-clamp-1 text-lg font-semibold cursor-pointer hover:text-black transition"
+                                                >
                                                     {product.name}
                                                 </h3>
 
                                                 <div className="mt-3 flex items-center justify-between">
-
                                                     <span className="text-xl font-bold">
                                                         $
                                                         {Number(
@@ -302,22 +351,22 @@ function UserLanding() {
                                                     </span>
 
                                                     <span
-                                                        className={`text-xs font-medium ${
+                                                        className={`text-xs font-semibold ${
                                                             outOfStock
                                                                 ? "text-red-500"
                                                                 : "text-green-600"
                                                         }`}
                                                     >
                                                         {outOfStock
-                                                            ? "Unavailable"
-                                                            : `${stock} in stock`}
+                                                            ? totalStock <= 0
+                                                                ? "Out of stock"
+                                                                : "Cart limit reached"
+                                                            : `${availableStock} in stock`}
                                                     </span>
-
                                                 </div>
 
                                                 {/* ACTIONS */}
                                                 <div className="mt-5 flex gap-2">
-
                                                     <button
                                                         onClick={() =>
                                                             navigate(
@@ -330,23 +379,14 @@ function UserLanding() {
                                                     </button>
 
                                                     <button
-                                                        disabled={
-                                                            outOfStock
-                                                        }
-                                                        onClick={() =>
-                                                            addToCart(
-                                                                product
-                                                            )
-                                                        }
+                                                        disabled={outOfStock}
+                                                        onClick={() => addToCart(product)}
+                                                        title={outOfStock ? "Out of stock / cart limit reached" : "Add to Cart"}
                                                         className="flex items-center justify-center rounded-xl bg-black px-4 py-3 text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-200"
                                                     >
-                                                        <ShoppingCart
-                                                            size={18}
-                                                        />
+                                                        <ShoppingCart size={18} />
                                                     </button>
-
                                                 </div>
-
                                             </div>
                                         </div>
                                     );
@@ -357,6 +397,12 @@ function UserLanding() {
                     )}
 
             </section>
+
+            {/* Added to Cart Notification Toast */}
+            <CartNotificationToast
+                product={toastProduct}
+                onClose={() => setToastProduct(null)}
+            />
 
         </div>
     );

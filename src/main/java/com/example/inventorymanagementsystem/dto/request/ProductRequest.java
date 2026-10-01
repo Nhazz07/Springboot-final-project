@@ -47,4 +47,12 @@ public class ProductRequest {
 
     @NotNull(message = "Supplier ID is required")
     private Long supplierId;
+
+    @io.swagger.v3.oas.annotations.media.Schema(description = "Single image file to upload to Cloudinary", type = "string", format = "binary")
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
+    private org.springframework.web.multipart.MultipartFile file;
+
+    @io.swagger.v3.oas.annotations.media.Schema(description = "Multiple image files to upload to Cloudinary", type = "array")
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
+    private List<org.springframework.web.multipart.MultipartFile> files;
 }

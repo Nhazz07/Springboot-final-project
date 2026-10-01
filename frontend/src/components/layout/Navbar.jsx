@@ -5,27 +5,46 @@ import {
   CreditCard,
   LogOut,
   Plus,
-  Radio,
   ShoppingBag,
   ShoppingCart,
-  User
+  User,
+  Package
 } from 'lucide-react';
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAdmin, isAuthenticated, logout } = useAuth();
+  const [cartCount, setCartCount] = React.useState(0);
+
+  const updateCartCount = React.useCallback(() => {
+    try {
+      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      const count = cart.reduce((acc, item) => acc + (Number(item.quantity) || 1), 0);
+      setCartCount(count);
+    } catch (e) {
+      setCartCount(0);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    updateCartCount();
+    window.addEventListener('cart-updated', updateCartCount);
+    window.addEventListener('storage', updateCartCount);
+    return () => {
+      window.removeEventListener('cart-updated', updateCartCount);
+      window.removeEventListener('storage', updateCartCount);
+    };
+  }, [updateCartCount]);
 
   const userNavItems = isAuthenticated
     ? [
         { name: 'Storefront', path: '/landing', icon: ShoppingBag },
-        { name: 'Catalog', path: '/products', icon: ShoppingBag },
-        { name: 'Cart', path: '/cart', icon: ShoppingCart },
-        { name: 'Profile', path: '/profile', icon: User },
+        { name: 'Catalog', path: '/catalog', icon: ShoppingBag },
+        { name: 'Purchases', path: '/purchase-history', icon: Package },
       ]
       : [
         { name: 'Storefront', path: '/', icon: ShoppingBag },
         { name: 'Catalog', path: '/catalog', icon: ShoppingBag },
-        { name: 'Cart', path: '/cart', icon: ShoppingCart },
         { name: 'Sign In', path: '/login', icon: User },
       ];
 
@@ -43,8 +62,16 @@ const Navbar = () => {
         return 'Supplier Directory';
       case '/users':
         return 'Staff & Access Control';
-      case '/pos':
-        return 'Point of Sale (Terminal)';
+      case '/orders':
+        return 'Customer Orders & Sales';
+      case '/catalog':
+        return 'Product Catalog';
+      case '/cart':
+        return 'Shopping Cart';
+      case '/checkout':
+        return 'Checkout & Payment';
+      case '/purchase-history':
+        return 'My Purchases';
       case '/profile':
         return 'My Profile & Settings';
       default:
@@ -66,7 +93,7 @@ const Navbar = () => {
 
       {!isAdmin && (
         <nav
-          className="order-3 flex w-full items-center gap-1 overflow-x-auto md:order-none md:w-auto"
+          className="order-3 flex w-full items-center gap-1 overflow-x-auto md:order-0 md:w-auto"
           aria-label="Customer navigation"
         >
           {userNavItems.map(({ name, path, icon: Icon }) => (
@@ -91,10 +118,32 @@ const Navbar = () => {
       )}
 
       <div className="flex items-center gap-3">
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#30d158]/10 border border-[#30d158]/20 text-xs font-medium text-[#1da441]">
-          <Radio className="w-3.5 h-3.5 animate-pulse" />
-          <span>API :3000 Active</span>
-        </div>
+        {!isAdmin && (
+          <button
+            onClick={() => navigate('/cart')}
+            title="Shopping Cart"
+            aria-label="Shopping Cart"
+            className={`relative flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs font-semibold transition active:scale-95 shadow-xs ${
+              location.pathname === '/cart'
+                ? 'bg-[#1d1d1f] text-white border-[#1d1d1f]'
+                : 'bg-white hover:bg-[#f5f5f7] border-black/8 text-[#1d1d1f]'
+            }`}
+          >
+            <ShoppingCart className="w-4 h-4" />
+            <span className="hidden sm:inline">Cart</span>
+            {cartCount > 0 && (
+              <span
+                className={`flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full text-[10px] font-bold ${
+                  location.pathname === '/cart'
+                    ? 'bg-white text-[#1d1d1f]'
+                    : 'bg-[#ff3b30] text-white'
+                }`}
+              >
+                {cartCount}
+              </span>
+            )}
+          </button>
+        )}
 
         {isAdmin && (
           <button

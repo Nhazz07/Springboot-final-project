@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { userService } from '../services/api';
 import {
@@ -10,9 +11,13 @@ import {
   AlertCircle,
   RefreshCw,
   Sparkles,
+  ShoppingBag,
+  Package,
+  ArrowRight,
 } from 'lucide-react';
 
 const Profile = () => {
+  const navigate = useNavigate();
   const { user, updateUserData } = useAuth();
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -253,6 +258,29 @@ const Profile = () => {
               </button>
             </div>
           </form>
+
+          {/* Quick Access to Orders & Purchase History */}
+          <div className="mt-8 pt-6 border-t border-black/8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-[#f5f5f7] border border-black/5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-[#1d1d1f] shadow-xs">
+                  <Package className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-[#1d1d1f]">My Orders & Purchase History</h4>
+                  <p className="text-[11px] text-[#86868b]">View delivery progress, arrival dates, and manage order cancellations.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/purchase-history')}
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-full bg-[#1d1d1f] hover:bg-[#333336] text-white text-xs font-semibold shadow-xs transition active:scale-95 shrink-0"
+              >
+                <span>View Purchases</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

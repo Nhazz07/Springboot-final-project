@@ -99,6 +99,14 @@ function App() {
                             path="/products/:id"
                             element={<ProductDetail />}
                         />
+                        <Route
+                            path="/product/:id"
+                            element={<ProductDetail />}
+                        />
+                        <Route
+                            path="/catalog/:id"
+                            element={<ProductDetail />}
+                        />
 
                         {/* Shopping Cart */}
                         <Route
@@ -161,7 +169,11 @@ function App() {
 
                         <Route
                             path="/products"
-                            element={<Products />}
+                            element={
+                                <ProtectedRoute adminOnly>
+                                    <Products />
+                                </ProtectedRoute>
+                            }
                         />
 
 
@@ -201,11 +213,11 @@ function App() {
                         />
 
 
-                   {/*Pos*/}
+                   {/*Pos deprecated*/}
 
                         <Route
                             path="/pos"
-                            element={<POS />}
+                            element={<Navigate to="/" replace />}
                         />
 
 
@@ -213,7 +225,11 @@ function App() {
 
                         <Route
                             path="/orders"
-                            element={<Orders />}
+                            element={
+                                <ProtectedRoute adminOnly>
+                                    <Orders />
+                                </ProtectedRoute>
+                            }
                         />
 
 

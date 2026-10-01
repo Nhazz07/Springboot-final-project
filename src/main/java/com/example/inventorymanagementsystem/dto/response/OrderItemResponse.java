@@ -20,6 +20,10 @@ public class OrderItemResponse {
 
     private String productName;
 
+    private String imageUrl;
+
+    private BigDecimal costPrice;
+
     private Integer quantity;
 
     private BigDecimal unitPrice;

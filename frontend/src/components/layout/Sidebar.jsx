@@ -6,12 +6,12 @@ import {
   Package,
   Tags,
   Truck,
-  CreditCard,
   LogOut,
   Sparkles,
   User,
   Users,
   ShoppingBag,
+  ShoppingCart,
   Shield,
   ClipboardList,
 } from 'lucide-react';
@@ -27,53 +27,21 @@ const Sidebar = () => {
 
   const navItems = [
     ...(isAdmin
-        ? [{ name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard }]
-        : [{ name: 'Storefront', path: '/', icon: ShoppingBag }]),
-
-    {
-      name: isAdmin ? 'Products' : 'Shopping Catalog',
-      path: '/products',
-      icon: Package,
-    },
-
-    ...(isAdmin
-        ? [
-          {
-            name: 'Categories',
-            path: '/categories',
-            icon: Tags,
-          },
-          {
-            name: 'Suppliers',
-            path: '/suppliers',
-            icon: Truck,
-          },
-          {
-            name: 'Staff & Users',
-            path: '/users',
-            icon: Users,
-          },
+      ? [
+          { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+          { name: 'Products & Inventory', path: '/products', icon: Package },
+          { name: 'Categories', path: '/categories', icon: Tags },
+          { name: 'Suppliers', path: '/suppliers', icon: Truck },
+          { name: 'Staff & Users', path: '/users', icon: Users },
+          { name: 'Customer Orders', path: '/orders', icon: ClipboardList },
         ]
-        : []),
-
-    {
-      name: 'Point of Sale',
-      path: '/pos',
-      icon: CreditCard,
-      highlight: true,
-    },
-
-    {
-      name: 'Orders',
-      path: '/orders',
-      icon: ClipboardList,
-    },
-
-    {
-      name: 'My Profile',
-      path: '/profile',
-      icon: User,
-    },
+      : [
+          { name: 'Storefront', path: '/', icon: ShoppingBag },
+          { name: 'Shopping Catalog', path: '/catalog', icon: Package },
+          { name: 'My Cart', path: '/cart', icon: ShoppingCart },
+          { name: 'My Purchases', path: '/purchase-history', icon: ClipboardList },
+        ]),
+    { name: 'My Profile', path: '/profile', icon: User },
   ];
 
   return (

@@ -8,8 +8,10 @@ export const getProducts = async () => {
     return response.data.data;
 };
 
-export const getProductById = async (id) => {
-    const response = await axios.get(`${PRODUCT_API}/${id}`);
+export const getProductById = async (id, token) => {
+    const activeToken = token || localStorage.getItem("token");
+    const headers = activeToken ? { Authorization: `Bearer ${activeToken}` } : {};
+    const response = await axios.get(`${PRODUCT_API}/${id}`, { headers });
     return response.data.data;
 };
 
@@ -44,6 +46,20 @@ export const getPurchaseHistory = async (userId, token) => {
 export const getPurchaseById = async (id, token) => {
     const response = await axios.get(
         `${ORDER_API}/${id}`,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+
+    return response.data.data;
+};
+
+export const updateOrderStatus = async (id, status, token) => {
+    const response = await axios.put(
+        `${ORDER_API}/${id}?status=${status}`,
+        {},
         {
             headers: {
                 Authorization: `Bearer ${token}`,

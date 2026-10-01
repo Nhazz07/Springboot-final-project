@@ -142,17 +142,8 @@ const Products = () => {
     });
     setSelectedFiles([]);
     setFilePreviews([]);
-    const imgs = [];
-    if (product.imageUrl) {
-      imgs.push(product.imageUrl);
-    }
-    if (product.images && product.images.length > 0) {
-      product.images.forEach((img) => {
-        if (!imgs.includes(img)) {
-          imgs.push(img);
-        }
-      });
-    }
+    const rawList = [product.imageUrl, ...(product.images || [])].filter(Boolean);
+    const imgs = Array.from(new Set(rawList));
     setExistingImages(imgs);
     setPrimaryImage(product.imageUrl || imgs[0] || null);
     setFormError('');
@@ -177,6 +168,7 @@ const Products = () => {
     setSelectedFiles((prev) => [...prev, ...files]);
     const previews = files.map((f) => URL.createObjectURL(f));
     setFilePreviews((prev) => [...prev, ...previews]);
+    e.target.value = '';
   };
 
   const removeSelectedFile = (index) => {

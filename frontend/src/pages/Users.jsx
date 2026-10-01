@@ -37,6 +37,8 @@ const Users = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState(null);
+  const [deletingUser, setDeletingUser] = useState(false);
 
   // Avatar upload state
   const [uploadingAvatarId, setUploadingAvatarId] = useState(null);
@@ -216,24 +218,30 @@ const Users = () => {
     }
   };
 
-  // Delete User
-  const handleDeleteUser = async (targetUser) => {
+  // Request Delete User (Show Popup Confirmation)
+  const handleDeleteUser = (targetUser) => {
     if (targetUser.id === currentUser?.id || targetUser.username === currentUser?.username) {
       showNotification('error', 'You cannot delete your own active administrator account.');
       return;
     }
+    setDeleteConfirmation(targetUser);
+  };
 
-    if (!window.confirm(`Are you sure you want to permanently delete account "${targetUser.username}"?`)) {
-      return;
-    }
+  // Confirm and Execute User Deletion
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmation) return;
 
+    setDeletingUser(true);
     try {
-      await userService.delete(targetUser.id);
-      showNotification('success', `Account "${targetUser.username}" deleted successfully.`);
+      await userService.delete(deleteConfirmation.id);
+      showNotification('success', `Account "${deleteConfirmation.username}" deleted successfully.`);
+      setDeleteConfirmation(null);
       fetchUsers();
     } catch (err) {
       console.error('Error deleting user:', err);
       showNotification('error', err.response?.data?.message || 'Failed to delete account.');
+    } finally {
+      setDeletingUser(false);
     }
   };
 
@@ -850,6 +858,76 @@ const Users = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE CONFIRMATION POPUP MODAL */}
+      {deleteConfirmation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-md">
+          <div className="bg-white w-full max-w-sm rounded-3xl p-6 border border-black/8 text-center shadow-[0_20px_60px_rgba(0,0,0,0.18)]">
+            <div className="w-12 h-12 rounded-full bg-red-50 border border-red-200 text-[#ff3b30] flex items-center justify-center mx-auto mb-3">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-bold text-[#1d1d1f] mb-1">
+              Delete User Account?
+            </h3>
+            <p className="text-xs text-[#86868b] mb-4">
+              Are you sure you want to permanently remove{' '}
+              <strong className="text-[#1d1d1f]">"{deleteConfirmation.username}"</strong>? This action cannot be undone.
+            </p>
+
+            {/* User Mini Summary Card */}
+            <div className="p-3 rounded-2xl bg-[#f5f5f7] border border-black/5 text-left flex items-center gap-3 mb-5">
+              {deleteConfirmation.avatarUrl ? (
+                <img
+                  src={deleteConfirmation.avatarUrl}
+                  alt={deleteConfirmation.username}
+                  className="w-10 h-10 rounded-full object-cover border border-black/10 shrink-0"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-[#1d1d1f] text-white flex items-center justify-center font-bold text-sm shrink-0">
+                  {deleteConfirmation.username?.[0]?.toUpperCase() || 'U'}
+                </div>
+              )}
+              <div className="truncate flex-1">
+                <p className="text-xs font-semibold text-[#1d1d1f] truncate">
+                  {deleteConfirmation.fullName || deleteConfirmation.username}
+                </p>
+                <p className="text-[11px] text-[#86868b] truncate">
+                  {deleteConfirmation.email || `@${deleteConfirmation.username}`}
+                </p>
+              </div>
+              <span
+                className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  deleteConfirmation.role === 'ADMIN'
+                    ? 'bg-purple-100 text-purple-800'
+                    : 'bg-black/5 text-[#1d1d1f]'
+                }`}
+              >
+                {deleteConfirmation.role}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmation(null)}
+                disabled={deletingUser}
+                className="px-5 py-2.5 rounded-full bg-[#f5f5f7] hover:bg-black/5 text-xs font-semibold text-[#1d1d1f] transition active:scale-95 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={deletingUser}
+                className="px-5 py-2.5 rounded-full bg-[#ff3b30] hover:bg-[#e03126] text-xs font-semibold text-white shadow-sm transition active:scale-95 disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {deletingUser && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                <span>{deletingUser ? 'Deleting...' : 'Yes, Delete'}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

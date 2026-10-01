@@ -54,9 +54,11 @@ public class OrderItemMapper {
                 orderItem.getProduct().getId()
         );
 
-        response.setProductName(
-                orderItem.getProduct().getName()
-        );
+        if (orderItem.getProduct() != null) {
+            response.setProductName(orderItem.getProduct().getName());
+            response.setImageUrl(orderItem.getProduct().getImageUrl());
+            response.setCostPrice(orderItem.getProduct().getCostPrice());
+        }
 
         response.setQuantity(
                 orderItem.getQuantity()
