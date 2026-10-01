@@ -1,6 +1,10 @@
 import { ShoppingCart } from "lucide-react";
 
-function ProductCard({ product, onAddToCart }) {
+function ProductCard({
+                         product,
+                         onAddToCart,
+                         showCartButton = true,
+                     }) {
     const isOutOfStock = product.stock === 0;
 
     return (
@@ -15,7 +19,9 @@ function ProductCard({ product, onAddToCart }) {
                         className="h-full w-full object-contain"
                     />
                 ) : (
-                    <span className="text-5xl justify-center">No Image show</span>
+                    <span className="text-5xl text-gray-400">
+                        No Image
+                    </span>
                 )}
             </div>
 
@@ -30,10 +36,13 @@ function ProductCard({ product, onAddToCart }) {
 
             {/* Price + Stock */}
             <div className="mt-3 flex items-center justify-between">
+
+                {/* Price */}
                 <span className="text-xl font-bold text-gray-900">
                     ${product.price.toFixed(2)}
                 </span>
 
+                {/* Stock */}
                 <span
                     className={`text-sm font-medium ${
                         isOutOfStock
@@ -47,20 +56,23 @@ function ProductCard({ product, onAddToCart }) {
                         ? "Out of stock"
                         : `${product.stock} in stock`}
                 </span>
+
             </div>
 
-            {/* Add to Cart */}
-            <button
-                onClick={() => onAddToCart(product)}
-                disabled={isOutOfStock}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-black px-4 py-3 font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300"
-            >
-                <ShoppingCart size={18} />
+            {/* Add to Cart Button */}
+            {showCartButton && (
+                <button
+                    onClick={() => onAddToCart(product)}
+                    disabled={isOutOfStock}
+                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-black px-4 py-3 font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300"
+                >
+                    <ShoppingCart size={18} />
 
-                {isOutOfStock
-                    ? "Out of Stock"
-                    : "Add to Cart"}
-            </button>
+                    {isOutOfStock
+                        ? "Out of Stock"
+                        : "Add to Cart"}
+                </button>
+            )}
 
         </div>
     );
