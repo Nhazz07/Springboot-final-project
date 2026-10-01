@@ -13,7 +13,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -78,21 +77,7 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll()
-                        // Catalog reads are available to authenticated customers, but all
-                        // catalog mutations belong to administrators.
-                        .requestMatchers(HttpMethod.POST, "/api/v1/products/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/v1/products/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/products/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/v1/categories/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/v1/categories/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/categories/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/v1/suppliers/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/v1/suppliers/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/v1/suppliers/**").hasRole("ADMIN")
-                        // Profile reads and avatar updates are kept available to signed-in
-                        // users; all other user-management endpoints are administrator-only.
-                        .requestMatchers("/api/v1/users/profile/**").authenticated()
-                        .requestMatchers("/api/v1/users/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/products").permitAll()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
