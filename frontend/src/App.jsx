@@ -1,55 +1,122 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import ProtectedRoute from './components/auth/ProtectedRoute';
-import Layout from './components/layout/Layout';
+import React from "react";
+import {
+    BrowserRouter,
+    Routes,
+    Route,
+    Navigate,
+} from "react-router-dom";
 
-// Pages
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import Products from './pages/Products';
-import Categories from './pages/Categories';
-import Suppliers from './pages/Suppliers';
-import POS from './pages/POS';
-import Orders from './pages/Orders';
-import Profile from './pages/Profile';
-import Users from './pages/Users';
-import UserLanding from './pages/UserLanding';
+import {
+    AuthProvider,
+    useAuth,
+} from "./context/AuthContext";
 
-// Smart Home Route: Dashboard for Admin, User Landing Page for Standard Users
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+import Layout from "./components/layout/Layout";
+
+// Customer storefront
+
+import UserLanding from "./pages/UserLanding";
+import ProductDetail from "./pages/ProductDetail";
+import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import OrderSuccess from "./pages/OrderSuccess";
+import PurchaseHistory from "./pages/PurchaseHistory";
+
+// Auth
+
+import Login from "./pages/Login";
+
+// Admin page
+
+import Dashboard from "./pages/Dashboard";
+import Products from "./pages/Products";
+import Categories from "./pages/Categories";
+import Suppliers from "./pages/Suppliers";
+import POS from "./pages/POS";
+import Orders from "./pages/Orders";
+import Profile from "./pages/Profile";
+import Users from "./pages/Users";
+import Catalog from "./pages/Catalog";
+
+
+// Home route
+
 const HomeRoute = () => {
     const { isAdmin } = useAuth();
-    return isAdmin ? <Dashboard /> : <UserLanding />;
+
+    return isAdmin
+        ? <Dashboard />
+        : <UserLanding />;
 };
+
+
+// Default route
 
 const DefaultRoute = () => {
     const { isAdmin } = useAuth();
-    return isAdmin ? <Navigate to="/dashboard" replace /> : <UserLanding />;
+
+    return isAdmin
+        ? <Navigate to="/dashboard" replace />
+        : <UserLanding />;
 };
+
+
+// App
 
 function App() {
     return (
         <BrowserRouter>
+
             <AuthProvider>
+
                 <Routes>
 
-                    {/* Public Route */}
+                 {/*Login*/}
 
                     <Route
                         path="/login"
                         element={<Login />}
                     />
 
-                    {/* Public landing page inside the user-style layout */}
+
+                   {/*Public storefront*/}
 
                     <Route element={<Layout />}>
+
+                        {/* Storefront */}
                         <Route
                             path="/"
                             element={<DefaultRoute />}
                         />
+                        <Route
+                            path="/catalog"
+                            element={<Catalog />}
+                        />
+
+                        {/* Product Details */}
+                        <Route
+                            path="/products/:id"
+                            element={<ProductDetail />}
+                        />
+
+                        {/* Shopping Cart */}
+                        <Route
+                            path="/cart"
+                            element={<Cart />}
+                        />
+
+                        {/* Checkout
+                            Guest CAN access this page */}
+                        <Route
+                            path="/checkout"
+                            element={<Checkout />}
+                        />
+
                     </Route>
 
-                    {/* Protected Routes inside App Layout */}
+
+                 {/*Project route*/}
 
                     <Route
                         element={
@@ -58,11 +125,15 @@ function App() {
                             </ProtectedRoute>
                         }
                     >
+{/*General home*/}
 
                         <Route
                             path="/home"
                             element={<HomeRoute />}
                         />
+
+
+                       {/*Login user landing*/}
 
                         <Route
                             path="/landing"
@@ -73,6 +144,9 @@ function App() {
                             }
                         />
 
+
+                       {/*Admin dashboard*/}
+
                         <Route
                             path="/dashboard"
                             element={
@@ -82,10 +156,16 @@ function App() {
                             }
                         />
 
+
+                        {/*Admin product*/}
+
                         <Route
                             path="/products"
                             element={<Products />}
                         />
+
+
+                      {/*Admin category*/}
 
                         <Route
                             path="/categories"
@@ -96,6 +176,9 @@ function App() {
                             }
                         />
 
+
+                       {/*Admin supplier*/}
+
                         <Route
                             path="/suppliers"
                             element={
@@ -104,6 +187,9 @@ function App() {
                                 </ProtectedRoute>
                             }
                         />
+
+
+                        {/*Admin user*/}
 
                         <Route
                             path="/users"
@@ -114,36 +200,67 @@ function App() {
                             }
                         />
 
-                        {/* Point of Sale */}
+
+                   {/*Pos*/}
 
                         <Route
                             path="/pos"
                             element={<POS />}
                         />
 
-                        {/* Order History */}
+
+                        {/*Admin order*/}
 
                         <Route
                             path="/orders"
                             element={<Orders />}
                         />
 
+
+                       {/*profile*/}
+
                         <Route
                             path="/profile"
                             element={<Profile />}
                         />
 
+
+                        {/*order success login require*/}
+
+                        <Route
+                            path="/order-success/:id"
+                            element={<OrderSuccess />}
+                        />
+
+
+
+                            {/*PURCHASE HISTORY,LOGIN REQUIRED*/}
+
+
+                        <Route
+                            path="/purchase-history"
+                            element={<PurchaseHistory />}
+                        />
+
                     </Route>
 
-                    {/* Catch-all redirect */}
+
+                   {/*catch all*/}
 
                     <Route
                         path="*"
-                        element={<Navigate to="/" replace />}
+                        element={
+                            <Navigate
+                                to="/"
+                                replace
+                            />
+                        }
                     />
 
                 </Routes>
+
             </AuthProvider>
+
         </BrowserRouter>
     );
 }
